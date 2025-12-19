@@ -147,10 +147,11 @@ int AnalyzePinBar(int barIndex)
    double lowerWick = MathMin(open, close) - low;
    double totalRange = high - low;
    
-   //--- Convert to pips
+   //--- Convert to pips (account for 3-digit vs 5-digit quotes)
    double point = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
-   double lowerWickPips = lowerWick / point / 10.0;
-   double upperWickPips = upperWick / point / 10.0;
+   double pipDivisor = (digits == 3 || digits == 5) ? 10.0 : 1.0;
+   double lowerWickPips = lowerWick / point / pipDivisor;
+   double upperWickPips = upperWick / point / pipDivisor;
    
    //--- Check for Bullish Pin Bar (Hammer)
    if(lowerWickPips >= MinWickPips && bodySize > 0)
@@ -207,16 +208,18 @@ void OpenPosition(ENUM_ORDER_TYPE orderType)
    double slDistance, tpDistance;
    double sl, tp;
    
+   double pipDivisor = (digits == 3 || digits == 5) ? 10.0 : 1.0;
+   
    if(orderType == ORDER_TYPE_BUY)
    {
-      slDistance = (price - low) + (StopLossBuffer * 10 * point);
+      slDistance = (price - low) + (StopLossBuffer * pipDivisor * point);
       tpDistance = wickLength * TakeProfitMultiplier;
       sl = NormalizeDouble(price - slDistance, digits);
       tp = NormalizeDouble(price + tpDistance, digits);
    }
    else
    {
-      slDistance = (high - price) + (StopLossBuffer * 10 * point);
+      slDistance = (high - price) + (StopLossBuffer * pipDivisor * point);
       tpDistance = wickLength * TakeProfitMultiplier;
       sl = NormalizeDouble(price + slDistance, digits);
       tp = NormalizeDouble(price - tpDistance, digits);
@@ -239,7 +242,7 @@ void OpenPosition(ENUM_ORDER_TYPE orderType)
    request.deviation = 10;
    request.magic = MagicNumber;
    request.comment = "PureWick_" + (orderType == ORDER_TYPE_BUY ? "BUY" : "SELL");
-   request.type_filling = ORDER_FILLING_FOK;
+   request.type_filling = ORDER_FILLING_IOC;
    
    //--- Send order
    if(OrderSend(request, result))
@@ -416,7 +419,8 @@ bool CheckSpread()
    double bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
    double spread = ask - bid;
    double point = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
-   double spreadPips = spread / point / 10.0;
+   double pipDivisor = (digits == 3 || digits == 5) ? 10.0 : 1.0;
+   double spreadPips = spread / point / pipDivisor;
    
    return (spreadPips <= MaxSpreadPips);
 }

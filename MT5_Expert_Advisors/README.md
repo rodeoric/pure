@@ -1,4 +1,4 @@
-# Pure Wick Trading Expert Advisor für MetaTrader 5
+# Pure Wick Trading Expert Advisor for MetaTrader 5
 
 ## Übersicht
 
