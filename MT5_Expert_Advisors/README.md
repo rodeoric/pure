@@ -8,13 +8,29 @@ Dieser Expert Advisor (EA) implementiert eine automatische Trading-Strategie fü
 
 ### Hauptstrategie: Pin Bar Reversal
 - **Erkennung von Hammer und Shooting Star Patterns**
+- **Symbol-Filter** nur für ausgewählte 21 Währungspaare und Instrumente
 - **Automatische Entry-Logik** basierend auf Docht-zu-Körper Verhältnis
+- **Sehr enge SL/TP** innerhalb der Kerze (Tight Stops Modus)
 - **Dynamische Stop Loss und Take Profit** Berechnung
 - **Risikomanagement** mit prozentbasierter Position-Sizing
 - **Trailing Stop** für Gewinnmaximierung
 - **Session-Filter** für optimale Trading-Zeiten
 - **Spread-Filter** zum Schutz vor hohen Kosten
 - **Trend-Filter** (optional) für Trades in Trendrichtung
+
+## Erlaubte Trading-Symbole
+
+Der EA handelt **nur** mit den folgenden 21 Symbolen:
+
+```
+AUDCAD, AUDCHF, AUDJPY, AUDNZD, AUDUSD
+CADCHF, CADJPY, CHFJPY, EURAUD, EURCAD
+USDJPY, GBPUSD, USDCHF, EURUSD, XAUUSD
+EURHUF, BTCUSD, XRPUSD, USDCAD, USDSEK
+NZDUSD
+```
+
+⚠️ **Wichtig**: Wenn Sie den EA auf einem anderen Symbol starten, wird die Initialisierung fehlschlagen.
 
 ## Installation
 
@@ -53,8 +69,13 @@ Dieser Expert Advisor (EA) implementiert eine automatische Trading-Strategie fü
 | WickToBodyRatio | 2.0 | Minimales Verhältnis von Docht zu Körper |
 | OppositeWickMaxPercent | 30.0 | Maximaler Gegendocht in % des Hauptdochts |
 | MinWickPips | 5 | Minimale Dochtlänge in Pips |
-| TakeProfitMultiplier | 1.5 | Take Profit als Vielfaches der Dochtlänge |
-| StopLossBuffer | 3 | Zusätzliche Pips für Stop Loss |
+| **UseTightStops** | **true** | **Aktiviert sehr enge SL/TP innerhalb der Kerze** |
+| **TightSLPercent** | **30.0** | **SL bei % der Kerzenhöhe (wenn UseTightStops=true)** |
+| **TightTPPercent** | **40.0** | **TP bei % der Kerzenhöhe (wenn UseTightStops=true)** |
+| TakeProfitMultiplier | 1.5 | Take Profit als Vielfaches der Dochtlänge (wenn UseTightStops=false) |
+| StopLossBuffer | 3 | Zusätzliche Pips für Stop Loss (wenn UseTightStops=false) |
+
+**Hinweis zu Tight Stops**: Wenn `UseTightStops=true`, werden SL und TP basierend auf der Kerzenhöhe berechnet und liegen innerhalb oder sehr nah an der Kerze. Dies führt zu sehr engen Stops, ideal für schnelle Scalping-Trades.
 
 ### Trading Einstellungen
 
@@ -78,8 +99,19 @@ Dieser Expert Advisor (EA) implementiert eine automatische Trading-Strategie fü
 
 ## Empfohlene Einstellungen
 
+### Für Tight Stops (Standard - Sehr enge SL/TP innerhalb der Kerze)
+```
+UseTightStops = true
+TightSLPercent = 30.0
+TightTPPercent = 40.0
+RiskPercent = 1.0
+MinWickPips = 5
+MaxOpenTrades = 1
+```
+
 ### Für Anfänger (Konservativ)
 ```
+UseTightStops = false
 RiskPercent = 0.5
 MinWickPips = 8
 TakeProfitMultiplier = 2.0
@@ -89,6 +121,7 @@ TradeOnlyTrend = true
 
 ### Für Fortgeschrittene (Moderat)
 ```
+UseTightStops = false
 RiskPercent = 1.0
 MinWickPips = 5
 TakeProfitMultiplier = 1.5
@@ -97,11 +130,13 @@ TradeOnlyTrend = false
 UseTrailingStop = true
 ```
 
-### Für Erfahrene (Aggressiv)
+### Für Erfahrene (Aggressiv mit Tight Stops)
 ```
+UseTightStops = true
+TightSLPercent = 25.0
+TightTPPercent = 35.0
 RiskPercent = 2.0
 MinWickPips = 3
-TakeProfitMultiplier = 1.2
 MaxOpenTrades = 3
 WickToBodyRatio = 1.5
 ```
@@ -118,8 +153,14 @@ Ein Long-Trade wird eröffnet, wenn:
 6. ✅ Spread ist unter dem Maximum
 7. ✅ (Optional) Preis ist über dem Trend-MA
 
-**Stop Loss**: Unter dem Docht-Tief + Buffer
-**Take Profit**: 1.5x der Dochtlänge
+**Stop Loss & Take Profit (Tight Stops Modus - Standard)**:
+- **SL**: 30% der Kerzenhöhe vom Entry-Preis entfernt (innerhalb der Kerze)
+- **TP**: 40% der Kerzenhöhe vom Entry-Preis entfernt (knapp innerhalb/außerhalb der Kerze)
+- Sehr enge Stops für schnelle Scalping-Trades
+
+**Stop Loss & Take Profit (Standard Modus - UseTightStops=false)**:
+- **SL**: Unter dem Docht-Tief + Buffer
+- **TP**: 1.5x der Dochtlänge
 
 ### Short Entry (Verkaufen)
 Ein Short-Trade wird eröffnet, wenn:
@@ -131,8 +172,14 @@ Ein Short-Trade wird eröffnet, wenn:
 6. ✅ Spread ist unter dem Maximum
 7. ✅ (Optional) Preis ist unter dem Trend-MA
 
-**Stop Loss**: Über dem Docht-Hoch + Buffer
-**Take Profit**: 1.5x der Dochtlänge
+**Stop Loss & Take Profit (Tight Stops Modus - Standard)**:
+- **SL**: 30% der Kerzenhöhe vom Entry-Preis entfernt (innerhalb der Kerze)
+- **TP**: 40% der Kerzenhöhe vom Entry-Preis entfernt (knapp innerhalb/außerhalb der Kerze)
+- Sehr enge Stops für schnelle Scalping-Trades
+
+**Stop Loss & Take Profit (Standard Modus - UseTightStops=false)**:
+- **SL**: Über dem Docht-Hoch + Buffer
+- **TP**: 1.5x der Dochtlänge
 
 ### Trailing Stop
 - Aktiviert sich bei 50% des Take Profit
@@ -141,12 +188,13 @@ Ein Short-Trade wird eröffnet, wenn:
 
 ## Beste Währungspaare
 
-Empfohlene Paare mit niedrigen Spreads:
-- EUR/USD (am besten)
-- GBP/USD
-- USD/JPY
-- AUD/USD
-- EUR/GBP
+**Alle 21 erlaubten Symbole** (siehe oben) können gehandelt werden. Der EA ist optimiert für:
+- **Forex-Paare**: EUR/USD, GBP/USD, USD/JPY, AUD/USD, etc.
+- **Krypto**: BTC/USD, XRP/USD
+- **Edelmetalle**: XAU/USD (Gold)
+- **Exotische Paare**: EUR/HUF
+
+⚠️ **Wichtig**: Nur die 21 aufgelisteten Symbole werden vom EA akzeptiert!
 
 ## Optimale Trading-Zeiten
 

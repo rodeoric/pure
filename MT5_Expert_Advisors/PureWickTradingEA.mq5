@@ -19,8 +19,11 @@ input group "=== Strategy Parameters ==="
 input double   WickToBodyRatio = 2.0;          // Mindest Docht-zu-Körper Verhältnis
 input double   OppositeWickMaxPercent = 30.0; // Max Gegendocht in % des Hauptdochts
 input int      MinWickPips = 5;                // Minimale Dochtlänge in Pips
-input double   TakeProfitMultiplier = 1.5;    // TP als Vielfaches der Dochtlänge
-input double   StopLossBuffer = 3;             // SL Buffer in Pips über/unter Docht
+input bool     UseTightStops = true;           // Sehr enge SL/TP innerhalb der Kerze
+input double   TightSLPercent = 30.0;          // SL bei % der Kerzenhöhe (bei TightStops)
+input double   TightTPPercent = 40.0;          // TP bei % der Kerzenhöhe (bei TightStops)
+input double   TakeProfitMultiplier = 1.5;    // TP als Vielfaches der Dochtlänge (wenn nicht TightStops)
+input double   StopLossBuffer = 3;             // SL Buffer in Pips über/unter Docht (wenn nicht TightStops)
 
 input group "=== Trading Settings ==="
 input int      MagicNumber = 123456;           // Magic Number für Orders
@@ -44,11 +47,30 @@ double         tickSize;
 double         tickValue;
 int            digits;
 
+//--- Allowed trading symbols
+string         allowedSymbols[] = {
+   "AUDCAD", "AUDCHF", "AUDJPY", "AUDNZD", "AUDUSD",
+   "CADCHF", "CADJPY", "CHFJPY", "EURAUD", "EURCAD",
+   "USDJPY", "GBPUSD", "USDCHF", "EURUSD", "XAUUSD",
+   "EURHUF", "BTCUSD", "XRPUSD", "USDCAD", "USDSEK",
+   "NZDUSD"
+};
+
 //+------------------------------------------------------------------+
 //| Expert initialization function                                    |
 //+------------------------------------------------------------------+
 int OnInit()
 {
+   //--- Check if symbol is allowed
+   if(!IsSymbolAllowed(_Symbol))
+   {
+      Print("WARNUNG: Symbol ", _Symbol, " ist nicht in der erlaubten Symbolliste!");
+      Print("Erlaubte Symbole: AUDCAD, AUDCHF, AUDJPY, AUDNZD, AUDUSD, CADCHF, CADJPY, CHFJPY,");
+      Print("                  EURAUD, EURCAD, USDJPY, GBPUSD, USDCHF, EURUSD, XAUUSD,");
+      Print("                  EURHUF, BTCUSD, XRPUSD, USDCAD, USDSEK, NZDUSD");
+      return(INIT_FAILED);
+   }
+   
    //--- Initialize indicator
    trendMA_handle = iMA(_Symbol, PERIOD_M1, TrendPeriod, 0, MODE_SMA, PRICE_CLOSE);
    if(trendMA_handle == INVALID_HANDLE)
@@ -68,6 +90,12 @@ int OnInit()
    Print("PureWickTradingEA initialisiert für ", _Symbol, " M1 Chart");
    Print("Risk per Trade: ", RiskPercent, "%");
    Print("Wick-to-Body Ratio: ", WickToBodyRatio);
+   Print("Tight Stops: ", UseTightStops ? "JA" : "NEIN");
+   if(UseTightStops)
+   {
+      Print("SL bei ", TightSLPercent, "% der Kerzenhöhe");
+      Print("TP bei ", TightTPPercent, "% der Kerzenhöhe");
+   }
    
    return(INIT_SUCCEEDED);
 }
@@ -209,20 +237,49 @@ void OpenPosition(ENUM_ORDER_TYPE orderType)
    double sl, tp;
    
    double pipDivisor = (digits == 3 || digits == 5) ? 10.0 : 1.0;
+   double candleRange = high - low;
    
-   if(orderType == ORDER_TYPE_BUY)
+   if(UseTightStops)
    {
-      slDistance = (price - low) + (StopLossBuffer * pipDivisor * point);
-      tpDistance = wickLength * TakeProfitMultiplier;
-      sl = NormalizeDouble(price - slDistance, digits);
-      tp = NormalizeDouble(price + tpDistance, digits);
+      //--- Tight stops within the candle
+      if(orderType == ORDER_TYPE_BUY)
+      {
+         // SL innerhalb der Kerze (z.B. 30% vom Low)
+         slDistance = candleRange * (TightSLPercent / 100.0);
+         sl = NormalizeDouble(price - slDistance, digits);
+         
+         // TP innerhalb oder knapp über der Kerze (z.B. 40% vom Entry)
+         tpDistance = candleRange * (TightTPPercent / 100.0);
+         tp = NormalizeDouble(price + tpDistance, digits);
+      }
+      else
+      {
+         // SL innerhalb der Kerze (z.B. 30% vom High)
+         slDistance = candleRange * (TightSLPercent / 100.0);
+         sl = NormalizeDouble(price + slDistance, digits);
+         
+         // TP innerhalb oder knapp unter der Kerze (z.B. 40% vom Entry)
+         tpDistance = candleRange * (TightTPPercent / 100.0);
+         tp = NormalizeDouble(price - tpDistance, digits);
+      }
    }
    else
    {
-      slDistance = (high - price) + (StopLossBuffer * pipDivisor * point);
-      tpDistance = wickLength * TakeProfitMultiplier;
-      sl = NormalizeDouble(price + slDistance, digits);
-      tp = NormalizeDouble(price - tpDistance, digits);
+      //--- Original logic: Stops based on wick extremes
+      if(orderType == ORDER_TYPE_BUY)
+      {
+         slDistance = (price - low) + (StopLossBuffer * pipDivisor * point);
+         tpDistance = wickLength * TakeProfitMultiplier;
+         sl = NormalizeDouble(price - slDistance, digits);
+         tp = NormalizeDouble(price + tpDistance, digits);
+      }
+      else
+      {
+         slDistance = (high - price) + (StopLossBuffer * pipDivisor * point);
+         tpDistance = wickLength * TakeProfitMultiplier;
+         sl = NormalizeDouble(price + slDistance, digits);
+         tp = NormalizeDouble(price - tpDistance, digits);
+      }
    }
    
    //--- Calculate lot size based on risk
@@ -441,5 +498,19 @@ bool IsBearishTrend()
 {
    double currentPrice = iClose(_Symbol, PERIOD_M1, 1);
    return (currentPrice < trendMA_buffer[1]);
+}
+
+//+------------------------------------------------------------------+
+//| Check if symbol is in allowed list                               |
+//+------------------------------------------------------------------+
+bool IsSymbolAllowed(string symbol)
+{
+   int arraySize = ArraySize(allowedSymbols);
+   for(int i = 0; i < arraySize; i++)
+   {
+      if(symbol == allowedSymbols[i])
+         return true;
+   }
+   return false;
 }
 //+------------------------------------------------------------------+
