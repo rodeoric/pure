@@ -32,6 +32,7 @@ input int      MagicNumber = 123456;         // Magic number for identification
 CTrade trade;
 string symbolArray[];
 int symbolCount = 0;
+double candleThresholdMultiplier = 0.0;
 
 //--- Structure to store position information
 struct PositionInfo
@@ -40,7 +41,6 @@ struct PositionInfo
    double   initialSL;
    double   initialTP;
    bool     manuallyModified;
-   bool     atBreakeven;
    datetime lastCandleTime;
    double   lastCandleSize;
 };
@@ -61,6 +61,12 @@ int OnInit()
    //--- Initialize position data array
    ArrayResize(positionData, 0);
    
+   //--- Pre-calculate candle threshold multiplier
+   candleThresholdMultiplier = CandleThresholdPercent / 100.0;
+   
+   //--- Set timer for cleanup (every 60 seconds)
+   EventSetTimer(60);
+   
    //--- Print initialization message
    Print("AutoSLTP EA initialized successfully");
    Print("Monitoring symbols: ", TradingSymbols);
@@ -75,6 +81,9 @@ int OnInit()
 //+------------------------------------------------------------------+
 void OnDeinit(const int reason)
 {
+   //--- Kill timer
+   EventKillTimer();
+   
    Print("AutoSLTP EA stopped. Reason: ", reason);
 }
 
@@ -131,8 +140,13 @@ void CheckAndManagePositions()
       string symbol = PositionGetString(POSITION_SYMBOL);
       long magic = PositionGetInteger(POSITION_MAGIC);
       
-      //--- Skip if not our symbol or magic number
+      //--- Skip if not our symbol
       if(!IsMonitoredSymbol(symbol))
+         continue;
+      
+      //--- Skip if not our magic number (unless it's 0, meaning position has no magic)
+      long posMagic = PositionGetInteger(POSITION_MAGIC);
+      if(posMagic != 0 && posMagic != MagicNumber)
          continue;
       
       //--- Check if position needs SL/TP
@@ -155,6 +169,7 @@ void CheckAndSetSLTP(ulong ticket, string symbol)
    double currentTP = PositionGetDouble(POSITION_TP);
    double openPrice = PositionGetDouble(POSITION_PRICE_OPEN);
    long posType = PositionGetInteger(POSITION_TYPE);
+   double point = SymbolInfoDouble(symbol, SYMBOL_POINT);
    
    //--- Check if position already has SL/TP set
    int posIndex = FindPositionIndex(ticket);
@@ -162,7 +177,7 @@ void CheckAndSetSLTP(ulong ticket, string symbol)
    if(posIndex < 0)
    {
       //--- New position, check if we need to set SL/TP
-      if(currentSL == 0 || currentTP == 0)
+      if(MathAbs(currentSL) < point || MathAbs(currentTP) < point)
       {
          //--- Calculate SL and TP
          double sl = 0, tp = 0;
@@ -193,8 +208,8 @@ void CheckAndSetSLTP(ulong ticket, string symbol)
       //--- Check if SL/TP was manually modified
       if(!positionData[posIndex].manuallyModified)
       {
-         if(MathAbs(currentSL - positionData[posIndex].initialSL) > SymbolInfoDouble(symbol, SYMBOL_POINT) ||
-            MathAbs(currentTP - positionData[posIndex].initialTP) > SymbolInfoDouble(symbol, SYMBOL_POINT))
+         if(MathAbs(currentSL - positionData[posIndex].initialSL) > point ||
+            MathAbs(currentTP - positionData[posIndex].initialTP) > point)
          {
             //--- SL or TP was manually modified
             positionData[posIndex].manuallyModified = true;
@@ -327,21 +342,13 @@ bool ShouldTrailStop(string symbol, long posType, int posIndex)
    }
    
    //--- Check if current candle is 20% larger than previous
-   double threshold = positionData[posIndex].lastCandleSize * (CandleThresholdPercent / 100.0);
+   double threshold = positionData[posIndex].lastCandleSize * candleThresholdMultiplier;
    bool thresholdMet = false;
    
-   if(posType == POSITION_TYPE_BUY)
-   {
-      //--- For buy positions, check if current candle is bullish and 20% larger
-      if(currentCandleSize > (positionData[posIndex].lastCandleSize + threshold))
-         thresholdMet = true;
-   }
-   else if(posType == POSITION_TYPE_SELL)
-   {
-      //--- For sell positions, check if current candle is bearish and 20% larger
-      if(currentCandleSize > (positionData[posIndex].lastCandleSize + threshold))
-         thresholdMet = true;
-   }
+   //--- For both buy and sell positions, check if current candle is significantly larger
+   //--- This indicates increased volatility/momentum in the direction of the trend
+   if(currentCandleSize > (positionData[posIndex].lastCandleSize + threshold))
+      thresholdMet = true;
    
    //--- Update tracking
    positionData[posIndex].lastCandleTime = currentCandleTime;
@@ -403,7 +410,6 @@ void AddPositionToTracking(ulong ticket, double sl, double tp)
    positionData[size].initialSL = sl;
    positionData[size].initialTP = tp;
    positionData[size].manuallyModified = false;
-   positionData[size].atBreakeven = false;
    positionData[size].lastCandleTime = 0;
    positionData[size].lastCandleSize = 0;
 }
