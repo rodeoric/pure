@@ -103,7 +103,7 @@ Funktioniert analog, nur in umgekehrter Richtung.
 
 ## Unterstützte Währungspaare
 
-Standard-Konfiguration (31 Instrumente):
+Standard-Konfiguration (51 Instrumente):
 
 **AUD Paare:**
 - AUDCAD, AUDCHF, AUDJPY, AUDNZD, AUDUSD
@@ -129,10 +129,30 @@ Standard-Konfiguration (31 Instrumente):
 **Edelmetalle:**
 - XAUUSD (Gold), XAGUSD (Silber)
 
-**Krypto:**
+**Kryptowährungen (TOP 20):**
 - BTCUSD (Bitcoin)
+- ETHUSD (Ethereum)
+- BNBUSD (Binance Coin)
+- XRPUSD (Ripple)
+- ADAUSD (Cardano)
+- SOLUSD (Solana)
+- DOGEUSD (Dogecoin)
+- TRXUSD (Tron)
+- MATICUSD (Polygon)
+- DOTUSD (Polkadot)
+- LTCUSD (Litecoin)
+- AVAXUSD (Avalanche)
+- LINKUSD (Chainlink)
+- UNIUSD (Uniswap)
+- ATOMUSD (Cosmos)
+- XLMUSD (Stellar)
+- TONUSD (Toncoin)
+- BCHUSD (Bitcoin Cash)
+- APTUSD (Aptos)
+- FILUSD (Filecoin)
+- NEARUSD (NEAR Protocol)
 
-**Hinweis:** Der EA unterstützt Broker-Suffixe (z.B. XAUUSD.a, XAUUSDm) automatisch durch intelligentes Symbol-Matching.
+**Hinweis:** Der EA unterstützt Broker-Suffixe (z.B. XAUUSD.a, XAUUSDm, BTCUSD.raw) automatisch durch intelligentes Symbol-Matching.
 
 Sie können beliebige andere Forex-Paare oder Symbole hinzufügen, indem Sie die **TradingSymbols** Eingabe anpassen.
 
