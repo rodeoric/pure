@@ -1,0 +1,433 @@
+//+------------------------------------------------------------------+
+//|                                                  AutoSLTP_EA.mq5 |
+//|                                      Automatic SL/TP Management  |
+//|                                                                  |
+//+------------------------------------------------------------------+
+#property copyright "Auto SL/TP Management EA"
+#property link      ""
+#property version   "1.00"
+#property description "Automatically manages Stop Loss and Take Profit"
+#property description "Sets SL 10 pips below entry and TP 20 pips above entry"
+#property description "Trails SL by 5 pips based on 5-minute candle analysis"
+
+#include <Trade\Trade.mqh>
+
+//--- Input parameters
+input group "=== Stop Loss & Take Profit Settings ==="
+input double   StopLossPips = 10.0;          // Stop Loss in pips
+input double   TakeProfitPips = 20.0;        // Take Profit in pips
+
+input group "=== Trailing Settings ==="
+input double   TrailStepPips = 5.0;          // Trailing step in pips
+input double   CandleThresholdPercent = 20.0; // Candle size threshold (%)
+input ENUM_TIMEFRAMES TrailTimeframe = PERIOD_M5; // Timeframe for trailing analysis
+
+input group "=== Trading Pairs ==="
+input string   TradingSymbols = "EURUSD,GBPUSD,USDJPY,AUDUSD,USDCAD,NZDUSD"; // Comma-separated list of symbols
+
+input group "=== General Settings ==="
+input int      MagicNumber = 123456;         // Magic number for identification
+
+//--- Global variables
+CTrade trade;
+string symbolArray[];
+int symbolCount = 0;
+
+//--- Structure to store position information
+struct PositionInfo
+{
+   ulong    ticket;
+   double   initialSL;
+   double   initialTP;
+   bool     manuallyModified;
+   bool     atBreakeven;
+   datetime lastCandleTime;
+   double   lastCandleSize;
+};
+
+PositionInfo positionData[];
+
+//+------------------------------------------------------------------+
+//| Expert initialization function                                     |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+   //--- Set magic number for the trade object
+   trade.SetExpertMagicNumber(MagicNumber);
+   
+   //--- Parse trading symbols
+   ParseTradingSymbols();
+   
+   //--- Initialize position data array
+   ArrayResize(positionData, 0);
+   
+   //--- Print initialization message
+   Print("AutoSLTP EA initialized successfully");
+   Print("Monitoring symbols: ", TradingSymbols);
+   Print("SL: ", StopLossPips, " pips, TP: ", TakeProfitPips, " pips");
+   Print("Trailing: ", TrailStepPips, " pips on ", EnumToString(TrailTimeframe));
+   
+   return(INIT_SUCCEEDED);
+}
+
+//+------------------------------------------------------------------+
+//| Expert deinitialization function                                  |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+   Print("AutoSLTP EA stopped. Reason: ", reason);
+}
+
+//+------------------------------------------------------------------+
+//| Expert tick function                                              |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+   //--- Check all open positions
+   CheckAndManagePositions();
+}
+
+//+------------------------------------------------------------------+
+//| Parse trading symbols from input string                          |
+//+------------------------------------------------------------------+
+void ParseTradingSymbols()
+{
+   string symbols = TradingSymbols;
+   symbolCount = StringSplit(symbols, ',', symbolArray);
+   
+   //--- Trim whitespace from symbol names
+   for(int i = 0; i < symbolCount; i++)
+   {
+      StringTrimLeft(symbolArray[i]);
+      StringTrimRight(symbolArray[i]);
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Check if symbol is in monitored list                             |
+//+------------------------------------------------------------------+
+bool IsMonitoredSymbol(string symbol)
+{
+   for(int i = 0; i < symbolCount; i++)
+   {
+      if(symbolArray[i] == symbol)
+         return true;
+   }
+   return false;
+}
+
+//+------------------------------------------------------------------+
+//| Check and manage all positions                                    |
+//+------------------------------------------------------------------+
+void CheckAndManagePositions()
+{
+   //--- Loop through all open positions
+   for(int i = PositionsTotal() - 1; i >= 0; i--)
+   {
+      ulong ticket = PositionGetTicket(i);
+      if(ticket <= 0) continue;
+      
+      //--- Get position properties
+      string symbol = PositionGetString(POSITION_SYMBOL);
+      long magic = PositionGetInteger(POSITION_MAGIC);
+      
+      //--- Skip if not our symbol or magic number
+      if(!IsMonitoredSymbol(symbol))
+         continue;
+      
+      //--- Check if position needs SL/TP
+      CheckAndSetSLTP(ticket, symbol);
+      
+      //--- Check if position needs trailing
+      CheckAndTrailStop(ticket, symbol);
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Check and set SL/TP if not already set                           |
+//+------------------------------------------------------------------+
+void CheckAndSetSLTP(ulong ticket, string symbol)
+{
+   if(!PositionSelectByTicket(ticket))
+      return;
+   
+   double currentSL = PositionGetDouble(POSITION_SL);
+   double currentTP = PositionGetDouble(POSITION_TP);
+   double openPrice = PositionGetDouble(POSITION_PRICE_OPEN);
+   long posType = PositionGetInteger(POSITION_TYPE);
+   
+   //--- Check if position already has SL/TP set
+   int posIndex = FindPositionIndex(ticket);
+   
+   if(posIndex < 0)
+   {
+      //--- New position, check if we need to set SL/TP
+      if(currentSL == 0 || currentTP == 0)
+      {
+         //--- Calculate SL and TP
+         double sl = 0, tp = 0;
+         CalculateSLTP(symbol, openPrice, posType, sl, tp);
+         
+         //--- Modify position
+         if(trade.PositionModify(ticket, sl, tp))
+         {
+            Print("SL/TP set for position #", ticket, " on ", symbol);
+            Print("SL: ", sl, " TP: ", tp);
+            
+            //--- Add to tracking
+            AddPositionToTracking(ticket, sl, tp);
+         }
+         else
+         {
+            Print("Failed to set SL/TP for position #", ticket, ". Error: ", GetLastError());
+         }
+      }
+      else
+      {
+         //--- Position already has SL/TP, add to tracking
+         AddPositionToTracking(ticket, currentSL, currentTP);
+      }
+   }
+   else
+   {
+      //--- Check if SL/TP was manually modified
+      if(!positionData[posIndex].manuallyModified)
+      {
+         if(MathAbs(currentSL - positionData[posIndex].initialSL) > SymbolInfoDouble(symbol, SYMBOL_POINT) ||
+            MathAbs(currentTP - positionData[posIndex].initialTP) > SymbolInfoDouble(symbol, SYMBOL_POINT))
+         {
+            //--- SL or TP was manually modified
+            positionData[posIndex].manuallyModified = true;
+            Print("Manual modification detected for position #", ticket, ". Stopping automated management.");
+         }
+      }
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Calculate SL and TP based on position type                        |
+//+------------------------------------------------------------------+
+void CalculateSLTP(string symbol, double openPrice, long posType, double &sl, double &tp)
+{
+   double point = SymbolInfoDouble(symbol, SYMBOL_POINT);
+   int digits = (int)SymbolInfoInteger(symbol, SYMBOL_DIGITS);
+   
+   //--- Calculate pip value (handle 3/5 digit brokers)
+   double pipValue = point;
+   if(digits == 3 || digits == 5)
+      pipValue = point * 10;
+   
+   double slDistance = StopLossPips * pipValue;
+   double tpDistance = TakeProfitPips * pipValue;
+   
+   if(posType == POSITION_TYPE_BUY)
+   {
+      sl = NormalizeDouble(openPrice - slDistance, digits);
+      tp = NormalizeDouble(openPrice + tpDistance, digits);
+   }
+   else if(posType == POSITION_TYPE_SELL)
+   {
+      sl = NormalizeDouble(openPrice + slDistance, digits);
+      tp = NormalizeDouble(openPrice - tpDistance, digits);
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Check and trail stop loss                                         |
+//+------------------------------------------------------------------+
+void CheckAndTrailStop(ulong ticket, string symbol)
+{
+   if(!PositionSelectByTicket(ticket))
+      return;
+   
+   int posIndex = FindPositionIndex(ticket);
+   if(posIndex < 0)
+      return;
+   
+   //--- Don't trail if manually modified
+   if(positionData[posIndex].manuallyModified)
+      return;
+   
+   double currentSL = PositionGetDouble(POSITION_SL);
+   double currentPrice = PositionGetDouble(POSITION_PRICE_CURRENT);
+   double openPrice = PositionGetDouble(POSITION_PRICE_OPEN);
+   long posType = PositionGetInteger(POSITION_TYPE);
+   double currentTP = PositionGetDouble(POSITION_TP);
+   
+   //--- Check if position is at breakeven or in profit
+   bool inProfit = false;
+   if(posType == POSITION_TYPE_BUY)
+      inProfit = (currentPrice > openPrice);
+   else if(posType == POSITION_TYPE_SELL)
+      inProfit = (currentPrice < openPrice);
+   
+   if(!inProfit)
+   {
+      positionData[posIndex].atBreakeven = false;
+      return;
+   }
+   
+   //--- Position is in profit, check candle conditions
+   if(ShouldTrailStop(symbol, posType, posIndex))
+   {
+      //--- Calculate new SL
+      double newSL = CalculateTrailedSL(symbol, currentPrice, currentSL, posType);
+      
+      //--- Trail only if new SL is better than current
+      bool shouldModify = false;
+      if(posType == POSITION_TYPE_BUY && newSL > currentSL)
+         shouldModify = true;
+      else if(posType == POSITION_TYPE_SELL && newSL < currentSL)
+         shouldModify = true;
+      
+      if(shouldModify)
+      {
+         if(trade.PositionModify(ticket, newSL, currentTP))
+         {
+            Print("SL trailed for position #", ticket, " on ", symbol, ". New SL: ", newSL);
+            positionData[posIndex].initialSL = newSL;
+         }
+         else
+         {
+            Print("Failed to trail SL for position #", ticket, ". Error: ", GetLastError());
+         }
+      }
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Check if stop should be trailed based on candle analysis         |
+//+------------------------------------------------------------------+
+bool ShouldTrailStop(string symbol, long posType, int posIndex)
+{
+   //--- Get current candle on trailing timeframe
+   datetime currentCandleTime = iTime(symbol, TrailTimeframe, 0);
+   
+   //--- Check if we have a new candle
+   if(currentCandleTime == positionData[posIndex].lastCandleTime)
+      return false; // Same candle, no action
+   
+   //--- Get previous candle data
+   double prevHigh = iHigh(symbol, TrailTimeframe, 1);
+   double prevLow = iLow(symbol, TrailTimeframe, 1);
+   double prevCandleSize = prevHigh - prevLow;
+   
+   //--- Get current candle data
+   double currentHigh = iHigh(symbol, TrailTimeframe, 0);
+   double currentLow = iLow(symbol, TrailTimeframe, 0);
+   double currentCandleSize = currentHigh - currentLow;
+   
+   //--- Store last candle info
+   if(positionData[posIndex].lastCandleTime == 0)
+   {
+      //--- First check, just store data
+      positionData[posIndex].lastCandleTime = currentCandleTime;
+      positionData[posIndex].lastCandleSize = currentCandleSize;
+      return false;
+   }
+   
+   //--- Check if current candle is 20% larger than previous
+   double threshold = positionData[posIndex].lastCandleSize * (CandleThresholdPercent / 100.0);
+   bool thresholdMet = false;
+   
+   if(posType == POSITION_TYPE_BUY)
+   {
+      //--- For buy positions, check if current candle is bullish and 20% larger
+      if(currentCandleSize > (positionData[posIndex].lastCandleSize + threshold))
+         thresholdMet = true;
+   }
+   else if(posType == POSITION_TYPE_SELL)
+   {
+      //--- For sell positions, check if current candle is bearish and 20% larger
+      if(currentCandleSize > (positionData[posIndex].lastCandleSize + threshold))
+         thresholdMet = true;
+   }
+   
+   //--- Update tracking
+   positionData[posIndex].lastCandleTime = currentCandleTime;
+   positionData[posIndex].lastCandleSize = currentCandleSize;
+   
+   return thresholdMet;
+}
+
+//+------------------------------------------------------------------+
+//| Calculate trailed stop loss                                       |
+//+------------------------------------------------------------------+
+double CalculateTrailedSL(string symbol, double currentPrice, double currentSL, long posType)
+{
+   double point = SymbolInfoDouble(symbol, SYMBOL_POINT);
+   int digits = (int)SymbolInfoInteger(symbol, SYMBOL_DIGITS);
+   
+   //--- Calculate pip value
+   double pipValue = point;
+   if(digits == 3 || digits == 5)
+      pipValue = point * 10;
+   
+   double trailDistance = TrailStepPips * pipValue;
+   double newSL = 0;
+   
+   if(posType == POSITION_TYPE_BUY)
+   {
+      newSL = NormalizeDouble(currentSL + trailDistance, digits);
+   }
+   else if(posType == POSITION_TYPE_SELL)
+   {
+      newSL = NormalizeDouble(currentSL - trailDistance, digits);
+   }
+   
+   return newSL;
+}
+
+//+------------------------------------------------------------------+
+//| Find position index in tracking array                             |
+//+------------------------------------------------------------------+
+int FindPositionIndex(ulong ticket)
+{
+   for(int i = 0; i < ArraySize(positionData); i++)
+   {
+      if(positionData[i].ticket == ticket)
+         return i;
+   }
+   return -1;
+}
+
+//+------------------------------------------------------------------+
+//| Add position to tracking array                                    |
+//+------------------------------------------------------------------+
+void AddPositionToTracking(ulong ticket, double sl, double tp)
+{
+   int size = ArraySize(positionData);
+   ArrayResize(positionData, size + 1);
+   
+   positionData[size].ticket = ticket;
+   positionData[size].initialSL = sl;
+   positionData[size].initialTP = tp;
+   positionData[size].manuallyModified = false;
+   positionData[size].atBreakeven = false;
+   positionData[size].lastCandleTime = 0;
+   positionData[size].lastCandleSize = 0;
+}
+
+//+------------------------------------------------------------------+
+//| Remove closed positions from tracking                             |
+//+------------------------------------------------------------------+
+void CleanupClosedPositions()
+{
+   for(int i = ArraySize(positionData) - 1; i >= 0; i--)
+   {
+      if(!PositionSelectByTicket(positionData[i].ticket))
+      {
+         //--- Position is closed, remove from tracking
+         ArrayRemove(positionData, i, 1);
+      }
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Timer function (optional - for periodic cleanup)                  |
+//+------------------------------------------------------------------+
+void OnTimer()
+{
+   CleanupClosedPositions();
+}
+//+------------------------------------------------------------------+
