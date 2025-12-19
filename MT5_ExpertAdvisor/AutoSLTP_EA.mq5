@@ -23,7 +23,7 @@ input double   CandleThresholdPercent = 20.0; // Candle size threshold (%)
 input ENUM_TIMEFRAMES TrailTimeframe = PERIOD_M5; // Timeframe for trailing analysis
 
 input group "=== Trading Pairs ==="
-input string   TradingSymbols = "AUDCAD,AUDCHF,AUDJPY,AUDNZD,AUDUSD,CADCHF,CADJPY,CHFJPY,EURAUD,EURCAD,USDJPY,GBPUSD,USDCHF,EURUSD,XAUUSD,EURHUF,BTCUSD"; // Comma-separated list of symbols
+input string   TradingSymbols = "AUDCAD,AUDCHF,AUDJPY,AUDNZD,AUDUSD,CADCHF,CADJPY,CHFJPY,EURAUD,EURCAD,EURCHF,EURGBP,EURJPY,EURUSD,GBPAUD,GBPCAD,GBPCHF,GBPJPY,GBPNZD,GBPUSD,NZDCAD,NZDCHF,NZDJPY,NZDUSD,USDCAD,USDCHF,USDJPY,XAUUSD,XAGUSD,EURHUF,BTCUSD"; // Comma-separated list of symbols
 
 input group "=== General Settings ==="
 input int      MagicNumber = 123456;         // Magic number for identification
@@ -74,10 +74,11 @@ int OnInit()
    
    //--- Print initialization message
    Print("AutoSLTP EA initialized successfully");
-   Print("Monitoring symbols: ", TradingSymbols);
+   Print("Monitoring ", symbolCount, " symbols: ", TradingSymbols);
    Print("SL: ", StopLossPips, " pips, TP: ", TakeProfitPips, " pips");
    Print("Trailing: ", TrailStepPips, " pips on ", EnumToString(TrailTimeframe));
    Print("Timer check interval: ", timerInterval, " seconds");
+   Print("Symbol matching: Exact match + prefix matching for broker suffixes");
    
    return(INIT_SUCCEEDED);
 }
@@ -123,11 +124,22 @@ void ParseTradingSymbols()
 //+------------------------------------------------------------------+
 bool IsMonitoredSymbol(string symbol)
 {
+   //--- First try exact match
    for(int i = 0; i < symbolCount; i++)
    {
       if(symbolArray[i] == symbol)
          return true;
    }
+   
+   //--- If no exact match, try partial match (for broker suffixes like XAUUSD.a)
+   //--- Check if any monitored symbol is contained at the start of the position symbol
+   for(int i = 0; i < symbolCount; i++)
+   {
+      int len = StringLen(symbolArray[i]);
+      if(StringSubstr(symbol, 0, len) == symbolArray[i])
+         return true;
+   }
+   
    return false;
 }
 

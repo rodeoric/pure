@@ -64,9 +64,10 @@ TrailTimeframe = PERIOD_M5       ← 5-Minuten-Chart
 
 **Trading Paare:**
 ```
-TradingSymbols = "AUDCAD,AUDCHF,AUDJPY,AUDNZD,AUDUSD,CADCHF,CADJPY,CHFJPY,EURAUD,EURCAD,USDJPY,GBPUSD,USDCHF,EURUSD,XAUUSD,EURHUF,BTCUSD"
+TradingSymbols = "AUDCAD,AUDCHF,AUDJPY,AUDNZD,AUDUSD,CADCHF,CADJPY,CHFJPY,EURAUD,EURCAD,EURCHF,EURGBP,EURJPY,EURUSD,GBPAUD,GBPCAD,GBPCHF,GBPJPY,GBPNZD,GBPUSD,NZDCAD,NZDCHF,NZDJPY,NZDUSD,USDCAD,USDCHF,USDJPY,XAUUSD,XAGUSD,EURHUF,BTCUSD"
 ```
 **Wichtig:** Keine Leerzeichen nach Kommas!
+**Hinweis:** Broker-Suffixe (z.B. XAUUSD.a) werden automatisch erkannt
 
 **Beispiele für eigene Paare:**
 ```
@@ -104,7 +105,8 @@ Hinweis: Der EA prüft Positionen bei jedem Tick UND zusätzlich alle X Sekunden
 3. Sie sollten sehen:
    ```
    AutoSLTP EA initialized successfully
-   Monitoring symbols: AUDCAD,AUDCHF,AUDJPY,AUDNZD,AUDUSD,CADCHF,CADJPY,CHFJPY,EURAUD,EURCAD,USDJPY,GBPUSD,USDCHF,EURUSD,XAUUSD,EURHUF,BTCUSD
+   Monitoring 31 symbols: AUDCAD,AUDCHF,AUDJPY,...
+   Symbol matching: Exact match + prefix matching for broker suffixes
    SL: 10.0 pips, TP: 20.0 pips
    Trailing: 5.0 pips on PERIOD_M5
    ```

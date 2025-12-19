@@ -103,24 +103,36 @@ Funktioniert analog, nur in umgekehrter Richtung.
 
 ## Unterstützte Währungspaare
 
-Standard-Konfiguration:
-- AUDCAD (Australian Dollar / Canadian Dollar)
-- AUDCHF (Australian Dollar / Swiss Franc)
-- AUDJPY (Australian Dollar / Japanese Yen)
-- AUDNZD (Australian Dollar / New Zealand Dollar)
-- AUDUSD (Australian Dollar / US Dollar)
-- CADCHF (Canadian Dollar / Swiss Franc)
-- CADJPY (Canadian Dollar / Japanese Yen)
-- CHFJPY (Swiss Franc / Japanese Yen)
-- EURAUD (Euro / Australian Dollar)
-- EURCAD (Euro / Canadian Dollar)
-- USDJPY (US Dollar / Japanese Yen)
-- GBPUSD (British Pound / US Dollar)
-- USDCHF (US Dollar / Swiss Franc)
-- EURUSD (Euro / US Dollar)
-- XAUUSD (Gold / US Dollar)
-- EURHUF (Euro / Hungarian Forint)
-- BTCUSD (Bitcoin / US Dollar)
+Standard-Konfiguration (31 Instrumente):
+
+**AUD Paare:**
+- AUDCAD, AUDCHF, AUDJPY, AUDNZD, AUDUSD
+
+**CAD Paare:**
+- CADCHF, CADJPY
+
+**CHF Paare:**
+- CHFJPY
+
+**EUR Paare:**
+- EURAUD, EURCAD, EURCHF, EURGBP, EURJPY, EURUSD, EURHUF
+
+**GBP Paare:**
+- GBPAUD, GBPCAD, GBPCHF, GBPJPY, GBPNZD, GBPUSD
+
+**NZD Paare:**
+- NZDCAD, NZDCHF, NZDJPY, NZDUSD
+
+**USD Paare:**
+- USDCAD, USDCHF, USDJPY
+
+**Edelmetalle:**
+- XAUUSD (Gold), XAGUSD (Silber)
+
+**Krypto:**
+- BTCUSD (Bitcoin)
+
+**Hinweis:** Der EA unterstützt Broker-Suffixe (z.B. XAUUSD.a, XAUUSDm) automatisch durch intelligentes Symbol-Matching.
 
 Sie können beliebige andere Forex-Paare oder Symbole hinzufügen, indem Sie die **TradingSymbols** Eingabe anpassen.
 
