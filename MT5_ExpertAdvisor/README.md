@@ -56,6 +56,7 @@ This Expert Advisor (EA) for MetaTrader 5 automates the management of Stop Loss 
 
 ### Allgemeine Einstellungen
 - **MagicNumber** (Standard: 123456): Identifikationsnummer für vom EA verwaltete Positionen
+- **TimerIntervalSeconds** (Standard: 1): Prüfintervall in Sekunden (1-60). Der EA prüft Positionen sowohl bei jedem Tick als auch periodisch alle X Sekunden
 
 ## Funktionsweise
 

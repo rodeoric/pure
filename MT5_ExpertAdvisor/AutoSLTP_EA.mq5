@@ -27,6 +27,7 @@ input string   TradingSymbols = "AUDCAD,AUDCHF,AUDJPY,AUDNZD,AUDUSD,CADCHF,CADJP
 
 input group "=== General Settings ==="
 input int      MagicNumber = 123456;         // Magic number for identification
+input int      TimerIntervalSeconds = 1;     // Timer check interval in seconds (1-60)
 
 //--- Global variables
 CTrade trade;
@@ -64,14 +65,19 @@ int OnInit()
    //--- Pre-calculate candle threshold multiplier
    candleThresholdMultiplier = CandleThresholdPercent / 100.0;
    
-   //--- Set timer for cleanup (every 60 seconds)
-   EventSetTimer(60);
+   //--- Set timer for position checks and cleanup
+   //--- Limit timer interval to reasonable range (1-60 seconds)
+   int timerInterval = TimerIntervalSeconds;
+   if(timerInterval < 1) timerInterval = 1;
+   if(timerInterval > 60) timerInterval = 60;
+   EventSetTimer(timerInterval);
    
    //--- Print initialization message
    Print("AutoSLTP EA initialized successfully");
    Print("Monitoring symbols: ", TradingSymbols);
    Print("SL: ", StopLossPips, " pips, TP: ", TakeProfitPips, " pips");
    Print("Trailing: ", TrailStepPips, " pips on ", EnumToString(TrailTimeframe));
+   Print("Timer check interval: ", timerInterval, " seconds");
    
    return(INIT_SUCCEEDED);
 }
@@ -445,10 +451,14 @@ void CleanupClosedPositions()
 }
 
 //+------------------------------------------------------------------+
-//| Timer function (optional - for periodic cleanup)                  |
+//| Timer function - periodic position checks and cleanup            |
 //+------------------------------------------------------------------+
 void OnTimer()
 {
+   //--- Check all open positions (ensures positions are checked even if ticks are slow)
+   CheckAndManagePositions();
+   
+   //--- Cleanup closed positions from tracking array
    CleanupClosedPositions();
 }
 //+------------------------------------------------------------------+

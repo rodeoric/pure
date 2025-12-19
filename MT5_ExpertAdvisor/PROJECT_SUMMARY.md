@@ -139,9 +139,14 @@ Prevents: Order rejection
    - Protection against zero division
 
 2. **Memory Management**
-   - Timer-based cleanup (60 seconds)
+   - Timer-based position checks and cleanup (configurable 1-60 seconds)
    - Proper resource deallocation
    - No memory leaks
+
+2a. **Dual Position Checking**
+   - OnTick: Checks positions on every price tick
+   - OnTimer: Periodic checks (default: every 1 second)
+   - Ensures positions are managed even if ticks are slow or missing
 
 3. **Performance Optimization**
    - Pre-calculated constants
@@ -198,6 +203,7 @@ CandleThresholdPercent = 20.0
 TrailTimeframe = PERIOD_M5
 TradingSymbols = "AUDCAD,AUDCHF,AUDJPY,AUDNZD,AUDUSD,CADCHF,CADJPY,CHFJPY,EURAUD,EURCAD,USDJPY,GBPUSD,USDCHF,EURUSD,XAUUSD,EURHUF,BTCUSD"
 MagicNumber = 123456
+TimerIntervalSeconds = 1
 ```
 
 ### Conservative (Lower Risk)

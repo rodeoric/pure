@@ -80,6 +80,12 @@ Nur ein Paar: "EURUSD"
 MagicNumber = 123456    ← Eindeutige Identifikation
 ```
 
+**Timer Intervall:**
+```
+TimerIntervalSeconds = 1    ← Prüfung alle 1 Sekunde (zusätzlich zu Ticks)
+```
+Hinweis: Der EA prüft Positionen bei jedem Tick UND zusätzlich alle X Sekunden
+
 ### 7. Bestätigen und starten
 1. Prüfen Sie die Einstellungen
 2. Aktivieren Sie **DLL-Imports zulassen** (falls angezeigt)

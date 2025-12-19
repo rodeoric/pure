@@ -35,6 +35,7 @@ CandleThresholdPercent = 20.0
 TrailTimeframe = PERIOD_M5
 TradingSymbols = "AUDCAD,AUDCHF,AUDJPY,AUDNZD,AUDUSD,CADCHF,CADJPY,CHFJPY,EURAUD,EURCAD,USDJPY,GBPUSD,USDCHF,EURUSD,XAUUSD,EURHUF,BTCUSD"
 MagicNumber = 123456
+TimerIntervalSeconds = 1
 ```
 
 ---
@@ -60,7 +61,9 @@ MagicNumber = 123456
 ## Häufige Probleme - Schnelllösung
 
 ### Problem: EA setzt kein SL/TP
-**Lösung:** Symbol zur TradingSymbols-Liste hinzufügen
+**Lösung:** 
+- Symbol zur TradingSymbols-Liste hinzufügen
+- TimerIntervalSeconds auf 1 setzen für häufigere Prüfung (Standard)
 
 ### Problem: Trailing funktioniert nicht
 **Lösung:** Position muss im Gewinn sein + neue 5-Min-Kerze abwarten
