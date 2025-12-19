@@ -50,6 +50,9 @@ struct PositionInfo
 
 PositionInfo positionData[];
 
+//--- Function declarations
+bool IsCryptoSymbol(string symbol);
+
 //+------------------------------------------------------------------+
 //| Expert initialization function                                     |
 //+------------------------------------------------------------------+
@@ -175,8 +178,8 @@ void CheckAndManagePositions()
       string symbol = PositionGetString(POSITION_SYMBOL);
       long magic = PositionGetInteger(POSITION_MAGIC);
       
-      //--- Log every position found for debugging
-      if(StringFind(symbol, "XRP") >= 0 || StringFind(symbol, "XAUUSD") >= 0)
+      //--- Log every position found for debugging (all crypto and metals)
+      if(IsCryptoSymbol(symbol) || StringFind(symbol, "XAU") >= 0 || StringFind(symbol, "XAG") >= 0)
       {
          Print("Found position: Ticket #", ticket, ", Symbol: ", symbol, ", Magic: ", magic);
       }
@@ -184,15 +187,21 @@ void CheckAndManagePositions()
       //--- Skip if not our symbol
       if(!IsMonitoredSymbol(symbol))
       {
-         if(StringFind(symbol, "XRP") >= 0)
+         if(IsCryptoSymbol(symbol))
             Print("  Symbol ", symbol, " not in monitored list - SKIPPING");
          continue;
+      }
+      else
+      {
+         //--- Log successful symbol matching for crypto
+         if(IsCryptoSymbol(symbol))
+            Print("  Symbol ", symbol, " MATCHED in monitored list");
       }
       
       //--- Skip if not our magic number (unless it's 0, meaning position has no magic)
       if(magic != 0 && magic != MagicNumber)
       {
-         if(StringFind(symbol, "XRP") >= 0)
+         if(IsCryptoSymbol(symbol))
             Print("  Magic number mismatch (Position: ", magic, ", EA: ", MagicNumber, ") - SKIPPING");
          continue;
       }
