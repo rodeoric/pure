@@ -46,7 +46,7 @@ This Expert Advisor (EA) for MetaTrader 5 automates the management of Stop Loss 
 - **TrailTimeframe** (Standard: PERIOD_M5): Zeitrahmen für Kerzenanalyse
 
 ### Trading Pairs
-- **TradingSymbols** (Standard: "EURUSD,GBPUSD,USDJPY,AUDUSD,USDCAD,NZDUSD"): 
+- **TradingSymbols** (Standard: "AUDCAD,AUDCHF,AUDJPY,AUDNZD,AUDUSD,CADCHF,CADJPY,CHFJPY,EURAUD,EURCAD,USDJPY,GBPUSD,USDCHF,EURUSD,XAUUSD,EURHUF,BTCUSD"): 
   Kommagetrennte Liste der zu überwachenden Währungspaare
   
   Sie können diese Liste anpassen, z.B.:
@@ -103,14 +103,25 @@ Funktioniert analog, nur in umgekehrter Richtung.
 ## Unterstützte Währungspaare
 
 Standard-Konfiguration:
-- EURUSD (Euro / US Dollar)
-- GBPUSD (British Pound / US Dollar)
-- USDJPY (US Dollar / Japanese Yen)
+- AUDCAD (Australian Dollar / Canadian Dollar)
+- AUDCHF (Australian Dollar / Swiss Franc)
+- AUDJPY (Australian Dollar / Japanese Yen)
+- AUDNZD (Australian Dollar / New Zealand Dollar)
 - AUDUSD (Australian Dollar / US Dollar)
-- USDCAD (US Dollar / Canadian Dollar)
-- NZDUSD (New Zealand Dollar / US Dollar)
+- CADCHF (Canadian Dollar / Swiss Franc)
+- CADJPY (Canadian Dollar / Japanese Yen)
+- CHFJPY (Swiss Franc / Japanese Yen)
+- EURAUD (Euro / Australian Dollar)
+- EURCAD (Euro / Canadian Dollar)
+- USDJPY (US Dollar / Japanese Yen)
+- GBPUSD (British Pound / US Dollar)
+- USDCHF (US Dollar / Swiss Franc)
+- EURUSD (Euro / US Dollar)
+- XAUUSD (Gold / US Dollar)
+- EURHUF (Euro / Hungarian Forint)
+- BTCUSD (Bitcoin / US Dollar)
 
-Sie können beliebige andere Forex-Paare hinzufügen, indem Sie die **TradingSymbols** Eingabe anpassen.
+Sie können beliebige andere Forex-Paare oder Symbole hinzufügen, indem Sie die **TradingSymbols** Eingabe anpassen.
 
 ## Wichtige Hinweise
 

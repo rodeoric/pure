@@ -64,7 +64,7 @@ TrailTimeframe = PERIOD_M5       ← 5-Minuten-Chart
 
 **Trading Paare:**
 ```
-TradingSymbols = "EURUSD,GBPUSD,USDJPY,AUDUSD,USDCAD,NZDUSD"
+TradingSymbols = "AUDCAD,AUDCHF,AUDJPY,AUDNZD,AUDUSD,CADCHF,CADJPY,CHFJPY,EURAUD,EURCAD,USDJPY,GBPUSD,USDCHF,EURUSD,XAUUSD,EURHUF,BTCUSD"
 ```
 **Wichtig:** Keine Leerzeichen nach Kommas!
 
@@ -98,7 +98,7 @@ MagicNumber = 123456    ← Eindeutige Identifikation
 3. Sie sollten sehen:
    ```
    AutoSLTP EA initialized successfully
-   Monitoring symbols: EURUSD,GBPUSD,USDJPY,AUDUSD,USDCAD,NZDUSD
+   Monitoring symbols: AUDCAD,AUDCHF,AUDJPY,AUDNZD,AUDUSD,CADCHF,CADJPY,CHFJPY,EURAUD,EURCAD,USDJPY,GBPUSD,USDCHF,EURUSD,XAUUSD,EURHUF,BTCUSD
    SL: 10.0 pips, TP: 20.0 pips
    Trailing: 5.0 pips on PERIOD_M5
    ```

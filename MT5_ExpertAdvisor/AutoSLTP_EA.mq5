@@ -23,7 +23,7 @@ input double   CandleThresholdPercent = 20.0; // Candle size threshold (%)
 input ENUM_TIMEFRAMES TrailTimeframe = PERIOD_M5; // Timeframe for trailing analysis
 
 input group "=== Trading Pairs ==="
-input string   TradingSymbols = "EURUSD,GBPUSD,USDJPY,AUDUSD,USDCAD,NZDUSD"; // Comma-separated list of symbols
+input string   TradingSymbols = "AUDCAD,AUDCHF,AUDJPY,AUDNZD,AUDUSD,CADCHF,CADJPY,CHFJPY,EURAUD,EURCAD,USDJPY,GBPUSD,USDCHF,EURUSD,XAUUSD,EURHUF,BTCUSD"; // Comma-separated list of symbols
 
 input group "=== General Settings ==="
 input int      MagicNumber = 123456;         // Magic number for identification
