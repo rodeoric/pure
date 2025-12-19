@@ -29,7 +29,8 @@ input group "=== Trading Settings ==="
 input int      MagicNumber = 123456;           // Magic Number für Orders
 input bool     TradeOnlyTrend = false;         // Nur in Trendrichtung handeln
 input int      TrendPeriod = 20;               // MA Periode für Trend-Filter
-input int      MaxOpenTrades = 1;              // Maximale gleichzeitige Trades
+input int      MaxOpenTrades = 5;              // Maximale gleichzeitige Trades
+input int      MaxTradesPerCandle = 5;         // Maximale Trades pro Kerze
 input bool     UseTrailingStop = true;         // Trailing Stop aktivieren
 input double   TrailingStopPercent = 50.0;    // Trailing Start bei % des TP
 
@@ -43,6 +44,8 @@ input double   MaxSpreadPips = 3.0;            // Maximaler Spread in Pips
 int            trendMA_handle;
 double         trendMA_buffer[];
 datetime       lastBarTime = 0;
+datetime       currentBarTime = 0;
+int            tradesThisCandle = 0;
 double         tickSize;
 double         tickValue;
 int            digits;
@@ -90,6 +93,8 @@ int OnInit()
    Print("PureWickTradingEA initialisiert für ", _Symbol, " M1 Chart");
    Print("Risk per Trade: ", RiskPercent, "%");
    Print("Wick-to-Body Ratio: ", WickToBodyRatio);
+   Print("Max gleichzeitige Trades: ", MaxOpenTrades);
+   Print("Max Trades pro Kerze: ", MaxTradesPerCandle);
    Print("Tight Stops: ", UseTightStops ? "JA" : "NEIN");
    if(UseTightStops)
    {
@@ -117,11 +122,13 @@ void OnDeinit(const int reason)
 void OnTick()
 {
    //--- Check if new bar
-   datetime currentBarTime = iTime(_Symbol, PERIOD_M1, 0);
-   if(currentBarTime == lastBarTime)
-      return;
-   
-   lastBarTime = currentBarTime;
+   currentBarTime = iTime(_Symbol, PERIOD_M1, 0);
+   if(currentBarTime != lastBarTime)
+   {
+      // New candle started - reset trade counter
+      lastBarTime = currentBarTime;
+      tradesThisCandle = 0;
+   }
    
    //--- Session filter
    if(UseSessionFilter && !IsInTradingSession())
@@ -138,6 +145,13 @@ void OnTick()
       return;
    }
    
+   //--- Check if we already opened max trades for this candle
+   if(tradesThisCandle >= MaxTradesPerCandle)
+   {
+      ManageOpenPositions();
+      return;
+   }
+   
    //--- Update MA buffer
    if(CopyBuffer(trendMA_handle, 0, 0, 3, trendMA_buffer) < 3)
       return;
@@ -148,12 +162,18 @@ void OnTick()
    if(signal == 1) // Bullish Pin Bar
    {
       if(!TradeOnlyTrend || IsBullishTrend())
-         OpenPosition(ORDER_TYPE_BUY);
+      {
+         if(OpenPosition(ORDER_TYPE_BUY))
+            tradesThisCandle++;
+      }
    }
    else if(signal == -1) // Bearish Pin Bar
    {
       if(!TradeOnlyTrend || IsBearishTrend())
-         OpenPosition(ORDER_TYPE_SELL);
+      {
+         if(OpenPosition(ORDER_TYPE_SELL))
+            tradesThisCandle++;
+      }
    }
    
    //--- Manage existing positions
@@ -215,7 +235,7 @@ int AnalyzePinBar(int barIndex)
 //+------------------------------------------------------------------+
 //| Open new position                                                 |
 //+------------------------------------------------------------------+
-void OpenPosition(ENUM_ORDER_TYPE orderType)
+bool OpenPosition(ENUM_ORDER_TYPE orderType)
 {
    double ask = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
    double bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
@@ -311,16 +331,19 @@ void OpenPosition(ENUM_ORDER_TYPE orderType)
                " | Lots: ", lotSize,
                " | SL: ", sl,
                " | TP: ", tp);
+         return true;
       }
       else
       {
          Print("Order fehlgeschlagen. RetCode: ", result.retcode, 
                " | ", result.comment);
+         return false;
       }
    }
    else
    {
       Print("OrderSend Fehler: ", GetLastError());
+      return false;
    }
 }
 

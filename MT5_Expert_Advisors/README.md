@@ -9,6 +9,8 @@ Dieser Expert Advisor (EA) implementiert eine automatische Trading-Strategie fü
 ### Hauptstrategie: Pin Bar Reversal
 - **Erkennung von Hammer und Shooting Star Patterns**
 - **Symbol-Filter** nur für ausgewählte 21 Währungspaare und Instrumente
+- **Multitrading-Fähigkeit** bis zu 5 gleichzeitige Trades pro Symbol
+- **Mehrere Trades pro Kerze** bis zu 5 Entries pro 1-Minuten-Kerze
 - **Automatische Entry-Logik** basierend auf Docht-zu-Körper Verhältnis
 - **Sehr enge SL/TP** innerhalb der Kerze (Tight Stops Modus)
 - **Dynamische Stop Loss und Take Profit** Berechnung
@@ -89,9 +91,12 @@ Dies führt zu sehr engen Stops, ideal für schnelle Scalping-Trades innerhalb d
 | MagicNumber | 123456 | Eindeutige ID für EA-Orders |
 | TradeOnlyTrend | false | Nur in Trendrichtung handeln |
 | TrendPeriod | 20 | MA-Periode für Trend-Erkennung |
-| MaxOpenTrades | 1 | Maximum gleichzeitige offene Trades |
+| **MaxOpenTrades** | **5** | **Maximum gleichzeitige offene Trades (Multitrading)** |
+| **MaxTradesPerCandle** | **5** | **Maximum Trades pro Kerze** |
 | UseTrailingStop | true | Trailing Stop aktivieren |
 | TrailingStopPercent | 50.0 | Start Trailing bei % des TP |
+
+**Hinweis zu Multitrading**: Der EA kann jetzt bis zu 5 gleichzeitige Trades halten und bis zu 5 Trades pro Kerze öffnen. Für Multi-Symbol-Trading, attachieren Sie den EA auf mehrere Charts (ein Chart pro Symbol).
 
 ### Session Filter
 
@@ -104,14 +109,15 @@ Dies führt zu sehr engen Stops, ideal für schnelle Scalping-Trades innerhalb d
 
 ## Empfohlene Einstellungen
 
-### Für Tight Stops (Standard - Sehr enge SL/TP innerhalb der Kerze)
+### Für Tight Stops mit Multitrading (Standard)
 ```
 UseTightStops = true
 TightSLPercent = 30.0
 TightTPPercent = 40.0
 RiskPercent = 1.0
 MinWickPips = 5
-MaxOpenTrades = 1
+MaxOpenTrades = 5
+MaxTradesPerCandle = 5
 ```
 
 ### Für Anfänger (Konservativ)
@@ -120,7 +126,8 @@ UseTightStops = false
 RiskPercent = 0.5
 MinWickPips = 8
 TakeProfitMultiplier = 2.0
-MaxOpenTrades = 1
+MaxOpenTrades = 2
+MaxTradesPerCandle = 2
 TradeOnlyTrend = true
 ```
 
@@ -130,16 +137,31 @@ UseTightStops = false
 RiskPercent = 1.0
 MinWickPips = 5
 TakeProfitMultiplier = 1.5
-MaxOpenTrades = 2
+MaxOpenTrades = 3
+MaxTradesPerCandle = 3
 TradeOnlyTrend = false
 UseTrailingStop = true
 ```
 
-### Für Erfahrene (Aggressiv mit Tight Stops)
+### Für Erfahrene (Aggressiv mit Tight Stops und Multitrading)
 ```
 UseTightStops = true
 TightSLPercent = 25.0
 TightTPPercent = 35.0
+RiskPercent = 2.0
+MinWickPips = 3
+MaxOpenTrades = 5
+MaxTradesPerCandle = 5
+WickToBodyRatio = 1.5
+```
+
+### Multi-Symbol Trading Setup
+Für Multi-Symbol Trading mit allen 21 erlaubten Symbolen:
+1. Öffnen Sie 21 Charts (einen pro Symbol)
+2. Attachieren Sie den EA auf jeden Chart
+3. Verwenden Sie unterschiedliche `MagicNumber` für jedes Symbol (optional aber empfohlen)
+4. Jeder EA kann bis zu 5 Trades gleichzeitig halten
+5. Insgesamt können Sie bis zu 105 gleichzeitige Trades haben (21 Symbole × 5 Trades)
 RiskPercent = 2.0
 MinWickPips = 3
 MaxOpenTrades = 3
