@@ -463,6 +463,14 @@ Wenn Sie um Hilfe bitten, fügen Sie hinzu:
 
 ```mql5
 //+------------------------------------------------------------------+
+//|                                                 BrokerInfo.mq5   |
+//|                                     Broker Information Script    |
+//+------------------------------------------------------------------+
+#property copyright "Broker Info Script"
+#property version   "1.00"
+#property script_show_inputs
+
+//+------------------------------------------------------------------+
 //| Script program start function                                    |
 //+------------------------------------------------------------------+
 void OnStart()

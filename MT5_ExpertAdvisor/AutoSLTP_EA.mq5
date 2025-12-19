@@ -322,32 +322,24 @@ bool ShouldTrailStop(string symbol, long posType, int posIndex)
    if(currentCandleTime == positionData[posIndex].lastCandleTime)
       return false; // Same candle, no action
    
-   //--- Get previous candle data
-   double prevHigh = iHigh(symbol, TrailTimeframe, 1);
-   double prevLow = iLow(symbol, TrailTimeframe, 1);
-   double prevCandleSize = prevHigh - prevLow;
-   
-   //--- Get current candle data
+   //--- Get current candle data (index 0 = forming candle)
    double currentHigh = iHigh(symbol, TrailTimeframe, 0);
    double currentLow = iLow(symbol, TrailTimeframe, 0);
    double currentCandleSize = currentHigh - currentLow;
    
-   //--- Store last candle info
+   //--- Store candle info on first check
    if(positionData[posIndex].lastCandleTime == 0)
    {
-      //--- First check, just store data
+      //--- First check, just store data and wait for next candle
       positionData[posIndex].lastCandleTime = currentCandleTime;
       positionData[posIndex].lastCandleSize = currentCandleSize;
       return false;
    }
    
-   //--- Check if current candle is 20% larger than previous
-   double threshold = positionData[posIndex].lastCandleSize * candleThresholdMultiplier;
+   //--- Check if current candle is X% larger than the stored previous candle (configurable threshold)
+   //--- Formula: current > previous * (1 + threshold%), simplified for performance
    bool thresholdMet = false;
-   
-   //--- For both buy and sell positions, check if current candle is significantly larger
-   //--- This indicates increased volatility/momentum in the direction of the trend
-   if(currentCandleSize > (positionData[posIndex].lastCandleSize + threshold))
+   if(currentCandleSize > positionData[posIndex].lastCandleSize * (1.0 + candleThresholdMultiplier))
       thresholdMet = true;
    
    //--- Update tracking
