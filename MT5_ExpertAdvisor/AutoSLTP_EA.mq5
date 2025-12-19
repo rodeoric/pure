@@ -128,7 +128,11 @@ bool IsMonitoredSymbol(string symbol)
    for(int i = 0; i < symbolCount; i++)
    {
       if(symbolArray[i] == symbol)
+      {
+         if(StringFind(symbol, "XRP") >= 0 || StringFind(symbol, "XAUUSD") >= 0)
+            Print("Symbol ", symbol, " matched exactly with ", symbolArray[i]);
          return true;
+      }
    }
    
    //--- If no exact match, try partial match (for broker suffixes like XAUUSD.a)
@@ -137,8 +141,15 @@ bool IsMonitoredSymbol(string symbol)
    {
       int len = StringLen(symbolArray[i]);
       if(StringSubstr(symbol, 0, len) == symbolArray[i])
+      {
+         if(StringFind(symbol, "XRP") >= 0 || StringFind(symbol, "XAUUSD") >= 0)
+            Print("Symbol ", symbol, " matched by prefix with ", symbolArray[i]);
          return true;
+      }
    }
+   
+   if(StringFind(symbol, "XRP") >= 0 || StringFind(symbol, "XAUUSD") >= 0)
+      Print("Symbol ", symbol, " NOT FOUND in monitored list");
    
    return false;
 }
@@ -148,8 +159,12 @@ bool IsMonitoredSymbol(string symbol)
 //+------------------------------------------------------------------+
 void CheckAndManagePositions()
 {
+   int totalPositions = PositionsTotal();
+   if(totalPositions == 0)
+      return;  // No positions to check
+   
    //--- Loop through all open positions
-   for(int i = PositionsTotal() - 1; i >= 0; i--)
+   for(int i = totalPositions - 1; i >= 0; i--)
    {
       ulong ticket = PositionGetTicket(i);
       if(ticket <= 0) continue;
@@ -158,13 +173,27 @@ void CheckAndManagePositions()
       string symbol = PositionGetString(POSITION_SYMBOL);
       long magic = PositionGetInteger(POSITION_MAGIC);
       
+      //--- Log every position found for debugging
+      if(StringFind(symbol, "XRP") >= 0 || StringFind(symbol, "XAUUSD") >= 0)
+      {
+         Print("Found position: Ticket #", ticket, ", Symbol: ", symbol, ", Magic: ", magic);
+      }
+      
       //--- Skip if not our symbol
       if(!IsMonitoredSymbol(symbol))
+      {
+         if(StringFind(symbol, "XRP") >= 0)
+            Print("  Symbol ", symbol, " not in monitored list - SKIPPING");
          continue;
+      }
       
       //--- Skip if not our magic number (unless it's 0, meaning position has no magic)
       if(magic != 0 && magic != MagicNumber)
+      {
+         if(StringFind(symbol, "XRP") >= 0)
+            Print("  Magic number mismatch (Position: ", magic, ", EA: ", MagicNumber, ") - SKIPPING");
          continue;
+      }
       
       //--- Check if position needs SL/TP
       CheckAndSetSLTP(ticket, symbol);
@@ -195,29 +224,41 @@ void CheckAndSetSLTP(ulong ticket, string symbol)
    {
       //--- New position, check if we need to set SL/TP
       double epsilon = point * 0.5;
+      
+      //--- Debug logging for troubleshooting
+      Print("Checking position #", ticket, " on ", symbol);
+      Print("  Current SL: ", currentSL, ", Current TP: ", currentTP);
+      Print("  Open Price: ", openPrice, ", Point: ", point, ", Epsilon: ", epsilon);
+      
       if(MathAbs(currentSL) < epsilon || MathAbs(currentTP) < epsilon)
       {
          //--- Calculate SL and TP
          double sl = 0, tp = 0;
          CalculateSLTP(symbol, openPrice, posType, sl, tp);
          
+         Print("  Calculated SL: ", sl, ", TP: ", tp);
+         
          //--- Modify position
          if(trade.PositionModify(ticket, sl, tp))
          {
-            Print("SL/TP set for position #", ticket, " on ", symbol);
-            Print("SL: ", sl, " TP: ", tp);
+            Print("SUCCESS: SL/TP set for position #", ticket, " on ", symbol);
+            Print("  SL: ", sl, " TP: ", tp);
             
             //--- Add to tracking
             AddPositionToTracking(ticket, sl, tp);
          }
          else
          {
-            Print("Failed to set SL/TP for position #", ticket, ". Error: ", GetLastError());
+            int errorCode = GetLastError();
+            Print("FAILED: Could not set SL/TP for position #", ticket, " on ", symbol);
+            Print("  Error code: ", errorCode);
+            Print("  Attempted SL: ", sl, ", TP: ", tp);
          }
       }
       else
       {
          //--- Position already has SL/TP, add to tracking
+         Print("Position #", ticket, " on ", symbol, " already has SL/TP set");
          AddPositionToTracking(ticket, currentSL, currentTP);
       }
    }

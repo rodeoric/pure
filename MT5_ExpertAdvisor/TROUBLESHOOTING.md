@@ -4,6 +4,52 @@
 
 ---
 
+## 0. Enhanced Debugging (NEU)
+
+### Automatisches Debug-Logging
+Der EA enthält jetzt erweitertes Logging für XRP und XAUUSD Positionen:
+
+**Was wird geloggt:**
+- Erkannte Positionen: Ticket, Symbol, Magic Number
+- Symbol-Matching: Exakt oder per Präfix
+- SL/TP Berechnungen: Current SL/TP, Open Price, Point, Epsilon
+- Erfolg/Fehler beim Setzen von SL/TP mit Error-Codes
+
+**Logs prüfen:**
+1. Terminal öffnen (Strg+T)
+2. Tab "Experten" öffnen
+3. Nach folgenden Meldungen suchen:
+   ```
+   Found position: Ticket #..., Symbol: XRPUSD, Magic: ...
+   Symbol XRPUSD matched exactly with XRPUSD
+   Checking position #... on XRPUSD
+     Current SL: 0, Current TP: 0
+     Open Price: ..., Point: ..., Epsilon: ...
+     Calculated SL: ..., TP: ...
+   SUCCESS: SL/TP set for position #...
+   ```
+
+**Bei Fehlern erscheint:**
+```
+FAILED: Could not set SL/TP for position #...
+  Error code: 10004 (or other code)
+  Attempted SL: ..., TP: ...
+```
+
+**Häufige Error Codes:**
+- 10004: Requote - Preis hat sich geändert, EA versucht erneut
+- 10006: Request rejected - Broker-Einschränkungen
+- 10013: Invalid request - SL/TP zu nah am Marktpreis
+- 10027: Trade not allowed - Auto Trading nicht aktiv
+
+**Wenn Symbol nicht gefunden wird:**
+```
+Symbol XRPUSD NOT FOUND in monitored list
+```
+→ Symbol zur TradingSymbols Liste hinzufügen
+
+---
+
 ## 1. EA startet nicht
 
 ### Symptom:
