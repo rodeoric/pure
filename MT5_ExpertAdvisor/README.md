@@ -126,9 +126,10 @@ Sie können beliebige andere Forex-Paare oder Symbole hinzufügen, indem Sie die
 ## Wichtige Hinweise
 
 ### Pip-Berechnung
-Der EA berücksichtigt automatisch 3- und 5-stellige Broker:
-- Bei 3- oder 5-stelligen Brokern werden Pips korrekt berechnet
-- Bei 2- oder 4-stelligen Brokern ebenfalls
+Der EA berechnet Pips korrekt für alle Instrumente:
+- 1 Pip = 10 Punkte für alle Standard-Forex-Paare und Instrumente
+- Funktioniert mit 2-, 3-, 4- und 5-stelligen Broker-Quotes
+- Beispiele: EURUSD (5-stellig): 10 Pips = 100 Punkte, XAUUSD (2-stellig): 10 Pips = 100 Punkte
 
 ### Spread-Berücksichtigung
 - Der EA setzt SL/TP basierend auf dem Eröffnungspreis

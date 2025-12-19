@@ -29,7 +29,7 @@ All requirements have been successfully implemented and thoroughly code-reviewed
 - Manual modification detection
 - Intelligent candle-based trailing
 - Multi-symbol support
-- Broker compatibility (3/5 digit)
+- Universal pip calculation (works for all digit formats)
 - Magic number filtering
 - Performance optimizations
 
@@ -106,7 +106,7 @@ All requirements have been successfully implemented and thoroughly code-reviewed
 ```cpp
 Default: SL = 10 pips, TP = 20 pips
 Configurable via input parameters
-Automatic broker digit detection (3/5 digit)
+Universal pip calculation (1 pip = 10 points for all instruments)
 ```
 
 #### 2. Manual Modification Detection

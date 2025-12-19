@@ -206,27 +206,25 @@ TrailStepPips = 7.0  // statt 5.0
 
 ### Symptom:
 - SL/TP scheinen falsch berechnet
-- Z.B. 100 Pips statt 10 Pips
+- Z.B. zu viel oder zu wenig Abstand
 
 ### Ursache:
-- 3- oder 5-stelliger Broker nicht erkannt
+- Seltene Instrumente mit ungewöhnlicher Quotierung
 
 ### Lösung:
-EA sollte dies automatisch handhaben. Falls nicht:
+Der EA verwendet die Standard-Definition: **1 Pip = 10 Punkte** für alle Instrumente.
 
-```mql5
-// Im EA ändern (nur wenn nötig):
-// Zeile finden mit:
-if(digits == 3 || digits == 5)
-   pipValue = point * 10;
+Dies funktioniert korrekt für:
+- Forex-Paare (2-, 3-, 4-, 5-stellig)
+- Gold/Silber (XAUUSD, XAGUSD)
+- Indizes und andere CFDs
 
-// Ggf. anpassen für Ihren Broker
-```
+**Beispiele:**
+- EURUSD (1.12345): 10 Pips = 100 Punkte = 0.00100
+- XAUUSD (1850.50): 10 Pips = 100 Punkte = 1.00
+- USDJPY (123.456): 10 Pips = 100 Punkte = 0.100
 
-**Aber normalerweise:**
-- EA erkennt dies automatisch
-- Keine Änderung nötig
-- Falls Problem: Kontaktieren Sie Support
+Falls ein Instrument abweichende Pip-Definitionen benötigt, passen Sie die Parameter `StopLossPips` und `TakeProfitPips` entsprechend an.
 
 ---
 

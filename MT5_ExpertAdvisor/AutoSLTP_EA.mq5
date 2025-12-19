@@ -228,10 +228,10 @@ void CalculateSLTP(string symbol, double openPrice, long posType, double &sl, do
    double point = SymbolInfoDouble(symbol, SYMBOL_POINT);
    int digits = (int)SymbolInfoInteger(symbol, SYMBOL_DIGITS);
    
-   //--- Calculate pip value (handle 3/5 digit brokers)
-   double pipValue = point;
-   if(digits == 3 || digits == 5)
-      pipValue = point * 10;
+   //--- Calculate pip value
+   //--- For most forex pairs and instruments: 1 pip = 10 points
+   //--- This works for: 5-digit (0.00010), 3-digit (0.010), 2-digit (0.10) quotes
+   double pipValue = point * 10;
    
    double slDistance = StopLossPips * pipValue;
    double tpDistance = TakeProfitPips * pipValue;
@@ -369,9 +369,9 @@ double CalculateTrailedSL(string symbol, double currentPrice, double currentSL, 
    int digits = (int)SymbolInfoInteger(symbol, SYMBOL_DIGITS);
    
    //--- Calculate pip value
-   double pipValue = point;
-   if(digits == 3 || digits == 5)
-      pipValue = point * 10;
+   //--- For most forex pairs and instruments: 1 pip = 10 points
+   //--- This works for: 5-digit (0.00010), 3-digit (0.010), 2-digit (0.10) quotes
+   double pipValue = point * 10;
    
    double trailDistance = TrailStepPips * pipValue;
    double newSL = 0;
