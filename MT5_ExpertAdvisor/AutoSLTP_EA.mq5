@@ -145,8 +145,7 @@ void CheckAndManagePositions()
          continue;
       
       //--- Skip if not our magic number (unless it's 0, meaning position has no magic)
-      long posMagic = PositionGetInteger(POSITION_MAGIC);
-      if(posMagic != 0 && posMagic != MagicNumber)
+      if(magic != 0 && magic != MagicNumber)
          continue;
       
       //--- Check if position needs SL/TP
@@ -177,7 +176,8 @@ void CheckAndSetSLTP(ulong ticket, string symbol)
    if(posIndex < 0)
    {
       //--- New position, check if we need to set SL/TP
-      if(MathAbs(currentSL) < point || MathAbs(currentTP) < point)
+      double epsilon = point * 0.5;
+      if(MathAbs(currentSL) < epsilon || MathAbs(currentTP) < epsilon)
       {
          //--- Calculate SL and TP
          double sl = 0, tp = 0;
@@ -208,8 +208,9 @@ void CheckAndSetSLTP(ulong ticket, string symbol)
       //--- Check if SL/TP was manually modified
       if(!positionData[posIndex].manuallyModified)
       {
-         if(MathAbs(currentSL - positionData[posIndex].initialSL) > point ||
-            MathAbs(currentTP - positionData[posIndex].initialTP) > point)
+         double tolerance = point * 2.0;  // Allow 2 points tolerance for broker adjustments
+         if(MathAbs(currentSL - positionData[posIndex].initialSL) > tolerance ||
+            MathAbs(currentTP - positionData[posIndex].initialTP) > tolerance)
          {
             //--- SL or TP was manually modified
             positionData[posIndex].manuallyModified = true;
