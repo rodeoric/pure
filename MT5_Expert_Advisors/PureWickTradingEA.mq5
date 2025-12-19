@@ -248,7 +248,7 @@ void OpenPosition(ENUM_ORDER_TYPE orderType)
          sl = NormalizeDouble(low + (candleRange * (TightSLPercent / 100.0)), digits);
          slDistance = price - sl;
          
-         // TP at 40% from Low (inside/near top of candle)
+         // TP at 70% from Low (30% SL + 40% additional = inside/near top of candle)
          tp = NormalizeDouble(low + (candleRange * ((TightSLPercent + TightTPPercent) / 100.0)), digits);
          tpDistance = tp - price;
       }
@@ -258,7 +258,7 @@ void OpenPosition(ENUM_ORDER_TYPE orderType)
          sl = NormalizeDouble(high - (candleRange * (TightSLPercent / 100.0)), digits);
          slDistance = sl - price;
          
-         // TP at 40% from High (inside/near bottom of candle)
+         // TP at 70% from High (30% SL + 40% additional = inside/near bottom of candle)
          tp = NormalizeDouble(high - (candleRange * ((TightSLPercent + TightTPPercent) / 100.0)), digits);
          tpDistance = price - tp;
       }
