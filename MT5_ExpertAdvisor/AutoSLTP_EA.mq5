@@ -278,7 +278,6 @@ void CheckAndTrailStop(ulong ticket, string symbol)
    
    if(!inProfit)
    {
-      positionData[posIndex].atBreakeven = false;
       return;
    }
    
