@@ -322,29 +322,40 @@ bool ShouldTrailStop(string symbol, long posType, int posIndex)
    if(currentCandleTime == positionData[posIndex].lastCandleTime)
       return false; // Same candle, no action
    
-   //--- Get current candle data (index 0 = forming candle)
-   double currentHigh = iHigh(symbol, TrailTimeframe, 0);
-   double currentLow = iLow(symbol, TrailTimeframe, 0);
-   double currentCandleSize = currentHigh - currentLow;
+   //--- Get completed previous candle data (index 1 = last completed candle)
+   //--- Using completed candles ensures reliable trading decisions
+   double prevHigh = iHigh(symbol, TrailTimeframe, 1);
+   double prevLow = iLow(symbol, TrailTimeframe, 1);
+   double prevCandleSize = prevHigh - prevLow;
    
    //--- Store candle info on first check
    if(positionData[posIndex].lastCandleTime == 0)
    {
       //--- First check, just store data and wait for next candle
       positionData[posIndex].lastCandleTime = currentCandleTime;
-      positionData[posIndex].lastCandleSize = currentCandleSize;
+      positionData[posIndex].lastCandleSize = prevCandleSize;
       return false;
    }
    
-   //--- Check if current candle is X% larger than the stored previous candle (configurable threshold)
+   //--- Check if candle is X% larger than the stored previous candle (configurable threshold)
+   //--- Protect against division by zero or very small candles
+   double minCandleSize = SymbolInfoDouble(symbol, SYMBOL_POINT) * 10;  // Minimum 10 points
+   if(positionData[posIndex].lastCandleSize < minCandleSize)
+   {
+      //--- Previous candle too small, update and wait
+      positionData[posIndex].lastCandleTime = currentCandleTime;
+      positionData[posIndex].lastCandleSize = prevCandleSize;
+      return false;
+   }
+   
    //--- Formula: current > previous * (1 + threshold%), simplified for performance
    bool thresholdMet = false;
-   if(currentCandleSize > positionData[posIndex].lastCandleSize * (1.0 + candleThresholdMultiplier))
+   if(prevCandleSize > positionData[posIndex].lastCandleSize * (1.0 + candleThresholdMultiplier))
       thresholdMet = true;
    
-   //--- Update tracking
+   //--- Update tracking with completed candle data
    positionData[posIndex].lastCandleTime = currentCandleTime;
-   positionData[posIndex].lastCandleSize = currentCandleSize;
+   positionData[posIndex].lastCandleSize = prevCandleSize;
    
    return thresholdMet;
 }
@@ -365,13 +376,25 @@ double CalculateTrailedSL(string symbol, double currentPrice, double currentSL, 
    double trailDistance = TrailStepPips * pipValue;
    double newSL = 0;
    
+   //--- Get broker's minimum stop distance
+   long stopsLevel = SymbolInfoInteger(symbol, SYMBOL_TRADE_STOPS_LEVEL);
+   double minDistance = stopsLevel * point;
+   
    if(posType == POSITION_TYPE_BUY)
    {
       newSL = NormalizeDouble(currentSL + trailDistance, digits);
+      //--- Ensure new SL is not too close to current price
+      double minAllowedSL = currentPrice - minDistance;
+      if(newSL > minAllowedSL)
+         newSL = minAllowedSL;
    }
    else if(posType == POSITION_TYPE_SELL)
    {
       newSL = NormalizeDouble(currentSL - trailDistance, digits);
+      //--- Ensure new SL is not too close to current price
+      double maxAllowedSL = currentPrice + minDistance;
+      if(newSL < maxAllowedSL)
+         newSL = maxAllowedSL;
    }
    
    return newSL;
