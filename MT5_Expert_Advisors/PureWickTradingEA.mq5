@@ -241,26 +241,26 @@ void OpenPosition(ENUM_ORDER_TYPE orderType)
    
    if(UseTightStops)
    {
-      //--- Tight stops within the candle
+      //--- Tight stops within the candle - calculated from candle extremes
       if(orderType == ORDER_TYPE_BUY)
       {
-         // SL innerhalb der Kerze (z.B. 30% vom Low)
-         slDistance = candleRange * (TightSLPercent / 100.0);
-         sl = NormalizeDouble(price - slDistance, digits);
+         // SL at 30% from Low (inside the candle)
+         sl = NormalizeDouble(low + (candleRange * (TightSLPercent / 100.0)), digits);
+         slDistance = price - sl;
          
-         // TP innerhalb oder knapp über der Kerze (z.B. 40% vom Entry)
-         tpDistance = candleRange * (TightTPPercent / 100.0);
-         tp = NormalizeDouble(price + tpDistance, digits);
+         // TP at 40% from Low (inside/near top of candle)
+         tp = NormalizeDouble(low + (candleRange * ((TightSLPercent + TightTPPercent) / 100.0)), digits);
+         tpDistance = tp - price;
       }
       else
       {
-         // SL innerhalb der Kerze (z.B. 30% vom High)
-         slDistance = candleRange * (TightSLPercent / 100.0);
-         sl = NormalizeDouble(price + slDistance, digits);
+         // SL at 30% from High (inside the candle)
+         sl = NormalizeDouble(high - (candleRange * (TightSLPercent / 100.0)), digits);
+         slDistance = sl - price;
          
-         // TP innerhalb oder knapp unter der Kerze (z.B. 40% vom Entry)
-         tpDistance = candleRange * (TightTPPercent / 100.0);
-         tp = NormalizeDouble(price - tpDistance, digits);
+         // TP at 40% from High (inside/near bottom of candle)
+         tp = NormalizeDouble(high - (candleRange * ((TightSLPercent + TightTPPercent) / 100.0)), digits);
+         tpDistance = price - tp;
       }
    }
    else

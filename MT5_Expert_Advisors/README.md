@@ -70,12 +70,17 @@ NZDUSD
 | OppositeWickMaxPercent | 30.0 | Maximaler Gegendocht in % des Hauptdochts |
 | MinWickPips | 5 | Minimale Dochtlänge in Pips |
 | **UseTightStops** | **true** | **Aktiviert sehr enge SL/TP innerhalb der Kerze** |
-| **TightSLPercent** | **30.0** | **SL bei % der Kerzenhöhe (wenn UseTightStops=true)** |
-| **TightTPPercent** | **40.0** | **TP bei % der Kerzenhöhe (wenn UseTightStops=true)** |
+| **TightSLPercent** | **30.0** | **SL bei 30% vom Kerzen-Low/High (innerhalb der Kerze)** |
+| **TightTPPercent** | **40.0** | **TP-Abstand zusätzlich zum SL (30%+40%=70% der Kerze)** |
 | TakeProfitMultiplier | 1.5 | Take Profit als Vielfaches der Dochtlänge (wenn UseTightStops=false) |
 | StopLossBuffer | 3 | Zusätzliche Pips für Stop Loss (wenn UseTightStops=false) |
 
-**Hinweis zu Tight Stops**: Wenn `UseTightStops=true`, werden SL und TP basierend auf der Kerzenhöhe berechnet und liegen innerhalb oder sehr nah an der Kerze. Dies führt zu sehr engen Stops, ideal für schnelle Scalping-Trades.
+**Hinweis zu Tight Stops**: Wenn `UseTightStops=true`, werden SL und TP vom Kerzen-Low (für BUY) bzw. High (für SELL) berechnet und liegen innerhalb der Kerze. 
+
+- **BUY**: SL bei 30% vom Low, TP bei 70% vom Low (30%+40%)
+- **SELL**: SL bei 30% vom High, TP bei 70% vom High (30%+40%)
+
+Dies führt zu sehr engen Stops, ideal für schnelle Scalping-Trades innerhalb der Kerze.
 
 ### Trading Einstellungen
 
@@ -154,9 +159,10 @@ Ein Long-Trade wird eröffnet, wenn:
 7. ✅ (Optional) Preis ist über dem Trend-MA
 
 **Stop Loss & Take Profit (Tight Stops Modus - Standard)**:
-- **SL**: 30% der Kerzenhöhe vom Entry-Preis entfernt (innerhalb der Kerze)
-- **TP**: 40% der Kerzenhöhe vom Entry-Preis entfernt (knapp innerhalb/außerhalb der Kerze)
-- Sehr enge Stops für schnelle Scalping-Trades
+- **SL**: Bei 30% vom Kerzen-Low (innerhalb der Kerze, 15 Pips über Low bei 50-Pip-Kerze)
+- **TP**: Bei 70% vom Kerzen-Low (30%+40%, innerhalb der Kerze, 35 Pips über Low)
+- Sehr enge Stops für schnelle Scalping-Trades, beide Levels innerhalb der Kerze
+- Beispiel: Bei Kerze 1.0950-1.1000: SL=1.0965, TP=1.0985
 
 **Stop Loss & Take Profit (Standard Modus - UseTightStops=false)**:
 - **SL**: Unter dem Docht-Tief + Buffer
@@ -173,9 +179,10 @@ Ein Short-Trade wird eröffnet, wenn:
 7. ✅ (Optional) Preis ist unter dem Trend-MA
 
 **Stop Loss & Take Profit (Tight Stops Modus - Standard)**:
-- **SL**: 30% der Kerzenhöhe vom Entry-Preis entfernt (innerhalb der Kerze)
-- **TP**: 40% der Kerzenhöhe vom Entry-Preis entfernt (knapp innerhalb/außerhalb der Kerze)
-- Sehr enge Stops für schnelle Scalping-Trades
+- **SL**: Bei 30% vom Kerzen-High (innerhalb der Kerze, 15 Pips unter High bei 50-Pip-Kerze)
+- **TP**: Bei 70% vom Kerzen-High (30%+40%, innerhalb der Kerze, 35 Pips unter High)
+- Sehr enge Stops für schnelle Scalping-Trades, beide Levels innerhalb der Kerze
+- Beispiel: Bei Kerze 1.0950-1.1000: SL=1.0985, TP=1.0965
 
 **Stop Loss & Take Profit (Standard Modus - UseTightStops=false)**:
 - **SL**: Über dem Docht-Hoch + Buffer
