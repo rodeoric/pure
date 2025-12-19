@@ -14,10 +14,8 @@
 
 //--- Input parameters
 input group "=== Stop Loss & Take Profit Settings ==="
-input double   StopLossPips = 10.0;          // Stop Loss in pips (Forex/Metals)
-input double   TakeProfitPips = 20.0;        // Take Profit in pips (Forex/Metals)
-input double   CryptoStopLossPips = 20.0;    // Stop Loss in pips (Crypto)
-input double   CryptoTakeProfitPips = 40.0;  // Take Profit in pips (Crypto)
+input double   StopLossPips = 50.0;          // Stop Loss in pips (ALL instruments)
+input double   TakeProfitPips = 100.0;       // Take Profit in pips (ALL instruments)
 
 input group "=== Trailing Settings ==="
 input double   TrailStepPips = 5.0;          // Trailing step in pips
@@ -80,10 +78,12 @@ int OnInit()
    //--- Print initialization message
    Print("AutoSLTP EA initialized successfully");
    Print("Monitoring ", symbolCount, " symbols: ", TradingSymbols);
-   Print("SL: ", StopLossPips, " pips, TP: ", TakeProfitPips, " pips");
+   Print("UNIVERSAL Settings - SL: ", StopLossPips, " pips (", StopLossPips * 10, " points), TP: ", TakeProfitPips, " pips (", TakeProfitPips * 10, " points)");
+   Print("Applies to ALL instruments: Forex, Metals, Cryptocurrencies");
    Print("Trailing: ", TrailStepPips, " pips on ", EnumToString(TrailTimeframe));
    Print("Timer check interval: ", timerInterval, " seconds");
    Print("Symbol matching: Exact match + prefix matching for broker suffixes");
+   Print("BTCUSD diagnostics enabled - Will log detailed info for BTC positions");
    
    return(INIT_SUCCEEDED);
 }
@@ -178,8 +178,8 @@ void CheckAndManagePositions()
       string symbol = PositionGetString(POSITION_SYMBOL);
       long magic = PositionGetInteger(POSITION_MAGIC);
       
-      //--- Log every position found for debugging (all crypto and metals)
-      if(IsCryptoSymbol(symbol) || StringFind(symbol, "XAU") >= 0 || StringFind(symbol, "XAG") >= 0)
+      //--- Log every BTCUSD position found for explicit diagnostics
+      if(StringFind(symbol, "BTC") >= 0)
       {
          Print("Found position: Ticket #", ticket, ", Symbol: ", symbol, ", Magic: ", magic);
       }
@@ -187,21 +187,21 @@ void CheckAndManagePositions()
       //--- Skip if not our symbol
       if(!IsMonitoredSymbol(symbol))
       {
-         if(IsCryptoSymbol(symbol))
+         if(StringFind(symbol, "BTC") >= 0)
             Print("  Symbol ", symbol, " not in monitored list - SKIPPING");
          continue;
       }
       else
       {
-         //--- Log successful symbol matching for crypto
-         if(IsCryptoSymbol(symbol))
+         //--- Log successful symbol matching for BTCUSD
+         if(StringFind(symbol, "BTC") >= 0)
             Print("  Symbol ", symbol, " MATCHED in monitored list");
       }
       
       //--- Skip if not our magic number (unless it's 0, meaning position has no magic)
       if(magic != 0 && magic != MagicNumber)
       {
-         if(IsCryptoSymbol(symbol))
+         if(StringFind(symbol, "BTC") >= 0)
             Print("  Magic number mismatch (Position: ", magic, ", EA: ", MagicNumber, ") - SKIPPING");
          continue;
       }
@@ -264,6 +264,15 @@ void CheckAndSetSLTP(ulong ticket, string symbol)
             Print("FAILED: Could not set SL/TP for position #", ticket, " on ", symbol);
             Print("  Error code: ", errorCode);
             Print("  Attempted SL: ", sl, ", TP: ", tp);
+            
+            //--- Explicit BTCUSD failure logging
+            if(StringFind(symbol, "BTC") >= 0)
+            {
+               Print("BTCUSD FAILED - This requires investigation");
+               Print("  Check broker symbol name in Market Watch");
+               Print("  Verify broker allows SL/TP modification for BTCUSD");
+               Print("  Try increasing StopLossPips and TakeProfitPips if error 10013");
+            }
          }
       }
       else
@@ -319,20 +328,22 @@ void CalculateSLTP(string symbol, double openPrice, long posType, double &sl, do
    int digits = (int)SymbolInfoInteger(symbol, SYMBOL_DIGITS);
    
    //--- Determine if this is a crypto symbol
-   bool isCrypto = IsCryptoSymbol(symbol);
-   
    //--- Calculate pip value
    //--- For most forex pairs and instruments: 1 pip = 10 points
    //--- This works for: 5-digit (0.00010), 3-digit (0.010), 2-digit (0.10) quotes
    double pipValue = point * 10;
    
-   //--- Use different pip distances for crypto vs forex/metals
-   double slPips = isCrypto ? CryptoStopLossPips : StopLossPips;
-   double tpPips = isCrypto ? CryptoTakeProfitPips : TakeProfitPips;
+   //--- Use universal pip distances for ALL instruments
+   double slPips = StopLossPips;
+   double tpPips = TakeProfitPips;
    
-   //--- Debug: Log crypto detection and pip values
-   if(isCrypto)
-      Print("CRYPTO detected: ", symbol, " - Using SL: ", slPips, " pips, TP: ", tpPips, " pips");
+   //--- Explicit BTCUSD logging for diagnostics
+   if(StringFind(symbol, "BTC") >= 0)
+   {
+      Print("BTCUSD POSITION DETECTED - This is a known issue symbol");
+      Print("  If SL/TP fails, check: Broker minimum distance, Symbol name exact match");
+      Print("  Using ", slPips, " pips for SL, ", tpPips, " pips for TP");
+   }
    
    double slDistance = slPips * pipValue;
    double tpDistance = tpPips * pipValue;
