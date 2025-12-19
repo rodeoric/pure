@@ -162,11 +162,6 @@ Für Multi-Symbol Trading mit allen 21 erlaubten Symbolen:
 3. Verwenden Sie unterschiedliche `MagicNumber` für jedes Symbol (optional aber empfohlen)
 4. Jeder EA kann bis zu 5 Trades gleichzeitig halten
 5. Insgesamt können Sie bis zu 105 gleichzeitige Trades haben (21 Symbole × 5 Trades)
-RiskPercent = 2.0
-MinWickPips = 3
-MaxOpenTrades = 3
-WickToBodyRatio = 1.5
-```
 
 ## Trading-Logik
 
