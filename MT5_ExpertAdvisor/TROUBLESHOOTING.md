@@ -42,6 +42,15 @@ FAILED: Could not set SL/TP for position #...
 - 10013: Invalid request - SL/TP zu nah am Marktpreis
 - 10027: Trade not allowed - Auto Trading nicht aktiv
 
+**Kryptowährungen (XRPUSD, BTCUSD, etc.):**
+Der EA erkennt Crypto-Symbole automatisch und verwendet größere Abstände:
+- Standard: 20 Pips SL, 40 Pips TP (200/400 Punkte)
+- Falls weiterhin Fehler auftreten, erhöhen Sie:
+  ```
+  CryptoStopLossPips = 50.0   // statt 20.0
+  CryptoTakeProfitPips = 100.0 // statt 40.0
+  ```
+
 **Wenn Symbol nicht gefunden wird:**
 ```
 Symbol XRPUSD NOT FOUND in monitored list

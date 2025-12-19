@@ -14,8 +14,10 @@
 
 //--- Input parameters
 input group "=== Stop Loss & Take Profit Settings ==="
-input double   StopLossPips = 10.0;          // Stop Loss in pips
-input double   TakeProfitPips = 20.0;        // Take Profit in pips
+input double   StopLossPips = 10.0;          // Stop Loss in pips (Forex/Metals)
+input double   TakeProfitPips = 20.0;        // Take Profit in pips (Forex/Metals)
+input double   CryptoStopLossPips = 20.0;    // Stop Loss in pips (Crypto)
+input double   CryptoTakeProfitPips = 40.0;  // Take Profit in pips (Crypto)
 
 input group "=== Trailing Settings ==="
 input double   TrailStepPips = 5.0;          // Trailing step in pips
@@ -280,6 +282,26 @@ void CheckAndSetSLTP(ulong ticket, string symbol)
 }
 
 //+------------------------------------------------------------------+
+//| Check if symbol is a cryptocurrency                               |
+//+------------------------------------------------------------------+
+bool IsCryptoSymbol(string symbol)
+{
+   //--- List of crypto identifiers (symbol usually contains these)
+   string cryptoIdentifiers[] = {"BTC", "ETH", "BNB", "XRP", "ADA", "SOL", "DOGE", "TRX", 
+                                  "MATIC", "DOT", "LTC", "AVAX", "LINK", "UNI", "ATOM", 
+                                  "XLM", "TON", "BCH", "APT", "FIL", "NEAR"};
+   
+   //--- Check if symbol contains any crypto identifier
+   for(int i = 0; i < ArraySize(cryptoIdentifiers); i++)
+   {
+      if(StringFind(symbol, cryptoIdentifiers[i]) >= 0)
+         return true;
+   }
+   
+   return false;
+}
+
+//+------------------------------------------------------------------+
 //| Calculate SL and TP based on position type                        |
 //+------------------------------------------------------------------+
 void CalculateSLTP(string symbol, double openPrice, long posType, double &sl, double &tp)
@@ -287,13 +309,24 @@ void CalculateSLTP(string symbol, double openPrice, long posType, double &sl, do
    double point = SymbolInfoDouble(symbol, SYMBOL_POINT);
    int digits = (int)SymbolInfoInteger(symbol, SYMBOL_DIGITS);
    
+   //--- Determine if this is a crypto symbol
+   bool isCrypto = IsCryptoSymbol(symbol);
+   
    //--- Calculate pip value
    //--- For most forex pairs and instruments: 1 pip = 10 points
    //--- This works for: 5-digit (0.00010), 3-digit (0.010), 2-digit (0.10) quotes
    double pipValue = point * 10;
    
-   double slDistance = StopLossPips * pipValue;
-   double tpDistance = TakeProfitPips * pipValue;
+   //--- Use different pip distances for crypto vs forex/metals
+   double slPips = isCrypto ? CryptoStopLossPips : StopLossPips;
+   double tpPips = isCrypto ? CryptoTakeProfitPips : TakeProfitPips;
+   
+   //--- Debug: Log crypto detection and pip values
+   if(isCrypto)
+      Print("CRYPTO detected: ", symbol, " - Using SL: ", slPips, " pips, TP: ", tpPips, " pips");
+   
+   double slDistance = slPips * pipValue;
+   double tpDistance = tpPips * pipValue;
    
    if(posType == POSITION_TYPE_BUY)
    {

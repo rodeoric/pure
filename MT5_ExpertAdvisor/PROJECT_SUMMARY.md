@@ -22,15 +22,19 @@ All requirements have been successfully implemented and thoroughly code-reviewed
 ## Deliverables
 
 ### 1. Main Expert Advisor
-**File**: `AutoSLTP_EA.mq5` (505 lines)
+**File**: `AutoSLTP_EA.mq5` (545 lines)
 
 **Features**:
 - Automatic SL/TP setting on new positions
+  - Forex/Metals: 10 pips SL, 20 pips TP
+  - Cryptocurrencies: 20 pips SL, 40 pips TP (auto-detected)
 - Manual modification detection
 - Intelligent candle-based trailing
-- Multi-symbol support
+- Multi-symbol support (51 instruments including TOP 20 crypto)
 - Universal pip calculation (works for all digit formats)
+- Crypto symbol detection
 - Magic number filtering
+- Enhanced debug logging
 - Performance optimizations
 
 **Quality**:

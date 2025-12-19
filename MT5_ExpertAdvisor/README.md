@@ -37,8 +37,12 @@ This Expert Advisor (EA) for MetaTrader 5 automates the management of Stop Loss 
 ## Konfiguration (Configuration)
 
 ### Stop Loss & Take Profit Einstellungen
-- **StopLossPips** (Standard: 10.0): Stop Loss Abstand in Pips
-- **TakeProfitPips** (Standard: 20.0): Take Profit Abstand in Pips
+- **StopLossPips** (Standard: 10.0): Stop Loss Abstand in Pips (für Forex/Metalle)
+- **TakeProfitPips** (Standard: 20.0): Take Profit Abstand in Pips (für Forex/Metalle)
+- **CryptoStopLossPips** (Standard: 20.0): Stop Loss Abstand in Pips (für Kryptowährungen)
+- **CryptoTakeProfitPips** (Standard: 40.0): Take Profit Abstand in Pips (für Kryptowährungen)
+
+**Hinweis**: Kryptowährungen benötigen größere Abstände aufgrund von Broker-Einschränkungen. Der EA erkennt automatisch Crypto-Symbole (BTC, ETH, XRP, etc.) und verwendet die entsprechenden Werte.
 
 ### Trailing Einstellungen
 - **TrailStepPips** (Standard: 5.0): Schrittweite für das Trailing in Pips

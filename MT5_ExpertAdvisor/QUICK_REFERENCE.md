@@ -4,8 +4,9 @@
 
 ### Was macht dieser EA? (What does this EA do?)
 
-✓ Setzt automatisch SL 10 Pips unter Einstieg  
-✓ Setzt automatisch TP 20 Pips über Einstieg  
+✓ Setzt automatisch SL/TP beim Trade-Eröffnung
+  - Forex/Metalle: 10 Pips SL, 20 Pips TP
+  - Kryptowährungen: 20 Pips SL, 40 Pips TP (automatisch erkannt)
 ✓ Erkennt manuelle Änderungen und stoppt dann  
 ✓ Zieht SL nach bei profitablen Trades (5 Pips)  
 ✓ Nutzt 5-Minuten-Kerzenanalyse für Trailing  
@@ -28,12 +29,23 @@
 ## Standard-Einstellungen
 
 ```
+// Forex & Metalle
 StopLossPips = 10.0
 TakeProfitPips = 20.0
+
+// Kryptowährungen (automatisch erkannt)
+CryptoStopLossPips = 20.0
+CryptoTakeProfitPips = 40.0
+
+// Trailing
 TrailStepPips = 5.0
 CandleThresholdPercent = 20.0
 TrailTimeframe = PERIOD_M5
+
+// Symbole (51 Instrumente)
 TradingSymbols = "AUDCAD,AUDCHF,AUDJPY,AUDNZD,AUDUSD,CADCHF,CADJPY,CHFJPY,EURAUD,EURCAD,EURCHF,EURGBP,EURJPY,EURUSD,GBPAUD,GBPCAD,GBPCHF,GBPJPY,GBPNZD,GBPUSD,NZDCAD,NZDCHF,NZDJPY,NZDUSD,USDCAD,USDCHF,USDJPY,XAUUSD,XAGUSD,EURHUF,BTCUSD,ETHUSD,BNBUSD,XRPUSD,ADAUSD,SOLUSD,DOGEUSD,TRXUSD,MATICUSD,DOTUSD,LTCUSD,AVAXUSD,LINKUSD,UNIUSD,ATOMUSD,XLMUSD,TONUSD,BCHUSD,APTUSD,FILUSD,NEARUSD"
+
+// Allgemein
 MagicNumber = 123456
 TimerIntervalSeconds = 1
 ```
