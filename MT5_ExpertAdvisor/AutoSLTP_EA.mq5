@@ -21,6 +21,10 @@ input group "=== Stop Loss & Take Profit Settings (Cryptocurrencies) ==="
 input double   CryptoStopLossPips = 100.0;   // Stop Loss in pips (Crypto) - 1000 points
 input double   CryptoTakeProfitPips = 250.0; // Take Profit in pips (Crypto) - 2500 points
 
+input group "=== Stop Loss & Take Profit Settings (BTCUSD Only) ==="
+input double   BTCStopLossPips = 5000.0;     // Stop Loss in pips (BTCUSD) - 50000 points
+input double   BTCTakeProfitPips = 10000.0;  // Take Profit in pips (BTCUSD) - 100000 points
+
 input group "=== Trailing Settings ==="
 input double   TrailStepPips = 5.0;          // Trailing step in pips
 input double   CandleThresholdPercent = 20.0; // Candle size threshold (%)
@@ -84,10 +88,11 @@ int OnInit()
    Print("Monitoring ", symbolCount, " symbols: ", TradingSymbols);
    Print("Forex & Metals Settings - SL: ", StopLossPips, " pips (", StopLossPips * 10, " points), TP: ", TakeProfitPips, " pips (", TakeProfitPips * 10, " points)");
    Print("Cryptocurrency Settings - SL: ", CryptoStopLossPips, " pips (", CryptoStopLossPips * 10, " points), TP: ", CryptoTakeProfitPips, " pips (", CryptoTakeProfitPips * 10, " points)");
+   Print("BTCUSD Specific Settings - SL: ", BTCStopLossPips, " pips (", BTCStopLossPips * 10, " points), TP: ", BTCTakeProfitPips, " pips (", BTCTakeProfitPips * 10, " points)");
    Print("Trailing: ", TrailStepPips, " pips on ", EnumToString(TrailTimeframe));
    Print("Timer check interval: ", timerInterval, " seconds");
    Print("Symbol matching: Exact match + prefix matching for broker suffixes");
-   Print("BTCUSD diagnostics enabled - Will log detailed info for BTC positions");
+   Print("BTCUSD has dedicated settings - Will use BTCUSD-specific SL/TP values");
    
    return(INIT_SUCCEEDED);
 }
@@ -304,12 +309,16 @@ void CheckAndSetSLTP(ulong ticket, string symbol)
 }
 
 //+------------------------------------------------------------------+
-//| Check if symbol is a cryptocurrency                               |
+//| Check if symbol is a cryptocurrency (excluding BTCUSD)            |
 //+------------------------------------------------------------------+
 bool IsCryptoSymbol(string symbol)
 {
+   //--- BTCUSD has its own dedicated settings, so exclude it from general crypto detection
+   if(StringFind(symbol, "BTC") >= 0)
+      return false;
+   
    //--- List of crypto identifiers (symbol usually contains these)
-   string cryptoIdentifiers[] = {"BTC", "ETH", "BNB", "XRP", "ADA", "SOL", "DOGE", "TRX", 
+   string cryptoIdentifiers[] = {"ETH", "BNB", "XRP", "ADA", "SOL", "DOGE", "TRX", 
                                   "MATIC", "DOT", "LTC", "AVAX", "LINK", "UNI", "ATOM", 
                                   "XLM", "TON", "BCH", "APT", "FIL", "NEAR"};
    
@@ -331,7 +340,10 @@ void CalculateSLTP(string symbol, double openPrice, long posType, double &sl, do
    double point = SymbolInfoDouble(symbol, SYMBOL_POINT);
    int digits = (int)SymbolInfoInteger(symbol, SYMBOL_DIGITS);
    
-   //--- Determine if this is a crypto symbol
+   //--- Check if this is BTCUSD (highest priority)
+   bool isBTCUSD = (StringFind(symbol, "BTC") >= 0);
+   
+   //--- Determine if this is a crypto symbol (excluding BTCUSD)
    bool isCrypto = IsCryptoSymbol(symbol);
    
    //--- Calculate pip value
@@ -339,21 +351,29 @@ void CalculateSLTP(string symbol, double openPrice, long posType, double &sl, do
    //--- This works for: 5-digit (0.00010), 3-digit (0.010), 2-digit (0.10) quotes
    double pipValue = point * 10;
    
-   //--- Use crypto-specific distances for crypto symbols, otherwise use forex/metals distances
-   double slPips = isCrypto ? CryptoStopLossPips : StopLossPips;
-   double tpPips = isCrypto ? CryptoTakeProfitPips : TakeProfitPips;
+   //--- Select appropriate SL/TP distances based on symbol type
+   double slPips, tpPips;
    
-   //--- Explicit BTCUSD logging for diagnostics
-   if(StringFind(symbol, "BTC") >= 0)
+   if(isBTCUSD)
    {
-      Print("BTCUSD POSITION DETECTED - This is a known issue symbol");
-      Print("  Cryptocurrency detected - Using Crypto settings");
-      Print("  If SL/TP fails, check: Broker minimum distance, Symbol name exact match");
+      //--- Use BTCUSD-specific distances
+      slPips = BTCStopLossPips;
+      tpPips = BTCTakeProfitPips;
+      Print("BTCUSD POSITION DETECTED - Using BTCUSD-specific settings");
       Print("  Using ", slPips, " pips for SL (", slPips * 10, " points), ", tpPips, " pips for TP (", tpPips * 10, " points)");
    }
    else if(isCrypto)
    {
+      //--- Use general crypto distances
+      slPips = CryptoStopLossPips;
+      tpPips = CryptoTakeProfitPips;
       Print("CRYPTO detected: ", symbol, " - Using SL: ", slPips, " pips (", slPips * 10, " points), TP: ", tpPips, " pips (", tpPips * 10, " points)");
+   }
+   else
+   {
+      //--- Use forex/metals distances
+      slPips = StopLossPips;
+      tpPips = TakeProfitPips;
    }
    
    double slDistance = slPips * pipValue;
