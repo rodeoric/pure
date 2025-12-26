@@ -25,6 +25,10 @@ input group "=== Stop Loss & Take Profit Settings (BTCUSD Only) ==="
 input double   BTCStopLossPips = 5000.0;     // Stop Loss in pips (BTCUSD) - 50000 points
 input double   BTCTakeProfitPips = 10000.0;  // Take Profit in pips (BTCUSD) - 100000 points
 
+input group "=== Break-Even Settings ==="
+input double   BreakEvenTriggerPips = 10.0;  // Move to BE when profit reaches this (pips)
+input double   BreakEvenOffsetPips = 1.0;    // Offset from entry when moving to BE (pips)
+
 input group "=== Trailing Settings ==="
 input double   TrailStepPips = 5.0;          // Trailing step in pips
 input double   CandleThresholdPercent = 20.0; // Candle size threshold (%)
@@ -52,6 +56,7 @@ struct PositionInfo
    bool     manuallyModified;
    datetime lastCandleTime;
    double   lastCandleSize;
+   bool     breakEvenSet;        // Track if position has been moved to break-even
 };
 
 PositionInfo positionData[];
@@ -89,6 +94,7 @@ int OnInit()
    Print("Forex & Metals Settings - SL: ", StopLossPips, " pips (", StopLossPips * 10, " points), TP: ", TakeProfitPips, " pips (", TakeProfitPips * 10, " points)");
    Print("Cryptocurrency Settings - SL: ", CryptoStopLossPips, " pips (", CryptoStopLossPips * 10, " points), TP: ", CryptoTakeProfitPips, " pips (", CryptoTakeProfitPips * 10, " points)");
    Print("BTCUSD Specific Settings - SL: ", BTCStopLossPips, " pips (", BTCStopLossPips * 10, " points), TP: ", BTCTakeProfitPips, " pips (", BTCTakeProfitPips * 10, " points)");
+   Print("Break-Even: Trigger at +", BreakEvenTriggerPips, " pips, Move SL to Entry +", BreakEvenOffsetPips, " pips");
    Print("Trailing: ", TrailStepPips, " pips on ", EnumToString(TrailTimeframe));
    Print("Timer check interval: ", timerInterval, " seconds");
    Print("Symbol matching: Exact match + prefix matching for broker suffixes");
@@ -392,7 +398,7 @@ void CalculateSLTP(string symbol, double openPrice, long posType, double &sl, do
 }
 
 //+------------------------------------------------------------------+
-//| Check and trail stop loss                                         |
+//| Check and trail stop loss (with break-even logic)                 |
 //+------------------------------------------------------------------+
 void CheckAndTrailStop(ulong ticket, string symbol)
 {
@@ -412,41 +418,87 @@ void CheckAndTrailStop(ulong ticket, string symbol)
    double openPrice = PositionGetDouble(POSITION_PRICE_OPEN);
    long posType = PositionGetInteger(POSITION_TYPE);
    double currentTP = PositionGetDouble(POSITION_TP);
+   double point = SymbolInfoDouble(symbol, SYMBOL_POINT);
+   int digits = (int)SymbolInfoInteger(symbol, SYMBOL_DIGITS);
    
-   //--- Check if position is at breakeven or in profit
-   bool inProfit = false;
+   //--- Calculate pip value (1 pip = 10 points)
+   double pipValue = point * 10;
+   
+   //--- Calculate profit in pips
+   double profitPips = 0;
    if(posType == POSITION_TYPE_BUY)
-      inProfit = (currentPrice > openPrice);
+      profitPips = (currentPrice - openPrice) / pipValue;
    else if(posType == POSITION_TYPE_SELL)
-      inProfit = (currentPrice < openPrice);
+      profitPips = (openPrice - currentPrice) / pipValue;
    
-   if(!inProfit)
+   //--- FIRST PRIORITY: Check if we should move to break-even
+   if(!positionData[posIndex].breakEvenSet && profitPips >= BreakEvenTriggerPips)
    {
-      return;
-   }
-   
-   //--- Position is in profit, check candle conditions
-   if(ShouldTrailStop(symbol, posType, posIndex))
-   {
-      //--- Calculate new SL
-      double newSL = CalculateTrailedSL(symbol, currentPrice, currentSL, posType);
+      //--- Calculate break-even SL (entry + offset)
+      double breakEvenSL;
+      if(posType == POSITION_TYPE_BUY)
+         breakEvenSL = NormalizeDouble(openPrice + (BreakEvenOffsetPips * pipValue), digits);
+      else
+         breakEvenSL = NormalizeDouble(openPrice - (BreakEvenOffsetPips * pipValue), digits);
       
-      //--- Trail only if new SL is better than current
-      bool shouldModify = false;
-      if(posType == POSITION_TYPE_BUY && newSL > currentSL)
-         shouldModify = true;
-      else if(posType == POSITION_TYPE_SELL && newSL < currentSL)
-         shouldModify = true;
+      //--- Only move to BE if it's better than current SL
+      bool shouldMoveToBE = false;
+      if(posType == POSITION_TYPE_BUY && breakEvenSL > currentSL)
+         shouldMoveToBE = true;
+      else if(posType == POSITION_TYPE_SELL && breakEvenSL < currentSL)
+         shouldMoveToBE = true;
       
-      if(shouldModify)
+      if(shouldMoveToBE)
       {
-         if(trade.PositionModify(ticket, newSL, currentTP))
+         if(trade.PositionModify(ticket, breakEvenSL, currentTP))
          {
-            Print("SL trailed for position #", ticket, " on ", symbol, ". New SL: ", newSL);
-            positionData[posIndex].initialSL = newSL;
+            Print("BREAK-EVEN activated for position #", ticket, " on ", symbol, ". New SL: ", breakEvenSL, " (Entry +", BreakEvenOffsetPips, " pips)");
+            positionData[posIndex].initialSL = breakEvenSL;
+            positionData[posIndex].breakEvenSet = true;
          }
          else
          {
+            Print("Failed to move position #", ticket, " to break-even. Error: ", GetLastError());
+         }
+      }
+      return; // Don't trail on the same tick as break-even
+   }
+   
+   //--- SECOND PRIORITY: Trail only after break-even is set
+   if(positionData[posIndex].breakEvenSet)
+   {
+      //--- Check if position is still in profit
+      bool inProfit = false;
+      if(posType == POSITION_TYPE_BUY)
+         inProfit = (currentPrice > openPrice);
+      else if(posType == POSITION_TYPE_SELL)
+         inProfit = (currentPrice < openPrice);
+      
+      if(!inProfit)
+         return;
+      
+      //--- Position is in profit, check candle conditions
+      if(ShouldTrailStop(symbol, posType, posIndex))
+      {
+         //--- Calculate new SL
+         double newSL = CalculateTrailedSL(symbol, currentPrice, currentSL, posType);
+         
+         //--- Trail only if new SL is better than current
+         bool shouldModify = false;
+         if(posType == POSITION_TYPE_BUY && newSL > currentSL)
+            shouldModify = true;
+         else if(posType == POSITION_TYPE_SELL && newSL < currentSL)
+            shouldModify = true;
+         
+         if(shouldModify)
+         {
+            if(trade.PositionModify(ticket, newSL, currentTP))
+            {
+               Print("SL trailed for position #", ticket, " on ", symbol, ". New SL: ", newSL);
+               positionData[posIndex].initialSL = newSL;
+            }
+            else
+            {
             Print("Failed to trail SL for position #", ticket, ". Error: ", GetLastError());
          }
       }
@@ -570,6 +622,7 @@ void AddPositionToTracking(ulong ticket, double sl, double tp)
    positionData[size].manuallyModified = false;
    positionData[size].lastCandleTime = 0;
    positionData[size].lastCandleSize = 0;
+   positionData[size].breakEvenSet = false;  // Initialize break-even flag
 }
 
 //+------------------------------------------------------------------+
