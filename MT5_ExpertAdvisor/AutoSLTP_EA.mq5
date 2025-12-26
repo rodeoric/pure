@@ -501,7 +501,8 @@ void CheckAndTrailStop(ulong ticket, string symbol)
             }
             else
             {
-            Print("Failed to trail SL for position #", ticket, ". Error: ", GetLastError());
+               Print("Failed to trail SL for position #", ticket, ". Error: ", GetLastError());
+            }
          }
       }
    }
