@@ -31,6 +31,9 @@ input bool     TradeOnlyTrend = false;         // Nur in Trendrichtung handeln
 input int      TrendPeriod = 20;               // MA Periode für Trend-Filter
 input int      MaxOpenTrades = 5;              // Maximale gleichzeitige Trades
 input int      MaxTradesPerCandle = 5;         // Maximale Trades pro Kerze
+input bool     UseBreakEven = true;            // Break-Even aktivieren
+input double   BreakEvenTriggerPips = 10.0;   // BE Trigger in Pips
+input double   BreakEvenOffsetPips = 1.0;      // BE Offset in Pips über/unter Entry
 input bool     UseTrailingStop = true;         // Trailing Stop aktivieren
 input double   TrailingStopPercent = 50.0;    // Trailing Start bei % des TP
 
@@ -95,6 +98,12 @@ int OnInit()
    Print("Wick-to-Body Ratio: ", WickToBodyRatio);
    Print("Max gleichzeitige Trades: ", MaxOpenTrades);
    Print("Max Trades pro Kerze: ", MaxTradesPerCandle);
+   Print("Break-Even: ", UseBreakEven ? "JA" : "NEIN");
+   if(UseBreakEven)
+   {
+      Print("BE Trigger: ", BreakEvenTriggerPips, " Pips | BE Offset: ", BreakEvenOffsetPips, " Pips");
+   }
+   Print("Trailing Stop: ", UseTrailingStop ? "JA" : "NEIN");
    Print("Tight Stops: ", UseTightStops ? "JA" : "NEIN");
    if(UseTightStops)
    {
@@ -395,11 +404,11 @@ int CountOpenPositions()
 }
 
 //+------------------------------------------------------------------+
-//| Manage open positions (Trailing Stop)                            |
+//| Manage open positions (Break-Even & Trailing Stop)               |
 //+------------------------------------------------------------------+
 void ManageOpenPositions()
 {
-   if(!UseTrailingStop)
+   if(!UseBreakEven && !UseTrailingStop)
       return;
    
    for(int i = PositionsTotal() - 1; i >= 0; i--)
@@ -425,6 +434,44 @@ void ManageOpenPositions()
                       (currentPrice - positionOpenPrice) : 
                       (positionOpenPrice - currentPrice);
       
+      double point = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
+      double pipDivisor = (digits == 3 || digits == 5) ? 10.0 : 1.0;
+      double profitPips = profit / (point * pipDivisor);
+      
+      //--- Break-Even Logic (Priority: Execute before trailing stop)
+      if(UseBreakEven && profitPips >= BreakEvenTriggerPips)
+      {
+         double breakEvenPrice;
+         double beOffset = BreakEvenOffsetPips * pipDivisor * point;
+         
+         if(positionType == POSITION_TYPE_BUY)
+         {
+            breakEvenPrice = positionOpenPrice + beOffset;
+            // Only move to BE if SL is still below BE level (not already at BE or trailing)
+            if(positionSL < breakEvenPrice && breakEvenPrice < currentPrice)
+            {
+               ModifyPosition(ticket, breakEvenPrice, positionTP);
+               Print("Break-Even aktiviert für Ticket ", ticket, " bei ", breakEvenPrice);
+               continue; // Skip trailing stop for this tick after moving to BE
+            }
+         }
+         else
+         {
+            breakEvenPrice = positionOpenPrice - beOffset;
+            // Only move to BE if SL is still above BE level (not already at BE or trailing)
+            if(positionSL > breakEvenPrice && breakEvenPrice > currentPrice)
+            {
+               ModifyPosition(ticket, breakEvenPrice, positionTP);
+               Print("Break-Even aktiviert für Ticket ", ticket, " bei ", breakEvenPrice);
+               continue; // Skip trailing stop for this tick after moving to BE
+            }
+         }
+      }
+      
+      //--- Trailing Stop Logic (Only after Break-Even has been set or if BE is disabled)
+      if(!UseTrailingStop)
+         continue;
+         
       double tpDistance = MathAbs(positionTP - positionOpenPrice);
       double profitPercent = (profit / tpDistance) * 100.0;
       

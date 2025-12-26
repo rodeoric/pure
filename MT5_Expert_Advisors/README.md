@@ -13,9 +13,10 @@ Dieser Expert Advisor (EA) implementiert eine automatische Trading-Strategie fü
 - **Mehrere Trades pro Kerze** bis zu 5 Entries pro 1-Minuten-Kerze
 - **Automatische Entry-Logik** basierend auf Docht-zu-Körper Verhältnis
 - **Sehr enge SL/TP** innerhalb der Kerze (Tight Stops Modus)
+- **Break-Even Funktion** automatisches Setzen auf Entry +/- Offset bei Gewinn
 - **Dynamische Stop Loss und Take Profit** Berechnung
 - **Risikomanagement** mit prozentbasierter Position-Sizing
-- **Trailing Stop** für Gewinnmaximierung
+- **Trailing Stop** für Gewinnmaximierung (aktiviert nach Break-Even)
 - **Session-Filter** für optimale Trading-Zeiten
 - **Spread-Filter** zum Schutz vor hohen Kosten
 - **Trend-Filter** (optional) für Trades in Trendrichtung
@@ -93,8 +94,13 @@ Dies führt zu sehr engen Stops, ideal für schnelle Scalping-Trades innerhalb d
 | TrendPeriod | 20 | MA-Periode für Trend-Erkennung |
 | **MaxOpenTrades** | **5** | **Maximum gleichzeitige offene Trades (Multitrading)** |
 | **MaxTradesPerCandle** | **5** | **Maximum Trades pro Kerze** |
+| **UseBreakEven** | **true** | **Break-Even Funktion aktivieren** |
+| **BreakEvenTriggerPips** | **10.0** | **Gewinn in Pips, ab dem SL auf Break-Even gesetzt wird** |
+| **BreakEvenOffsetPips** | **1.0** | **Offset in Pips über/unter Entry beim Break-Even** |
 | UseTrailingStop | true | Trailing Stop aktivieren |
 | TrailingStopPercent | 50.0 | Start Trailing bei % des TP |
+
+**Hinweis zu Break-Even**: Wenn der Trade +10 Pips im Gewinn ist, wird der SL automatisch auf Entry +1 Pip (Long) bzw. Entry -1 Pip (Short) gesetzt. Dies schützt vor Verlusten und sichert einen kleinen Gewinn. Das Trailing Stop wird erst danach aktiviert.
 
 **Hinweis zu Multitrading**: Der EA kann jetzt bis zu 5 gleichzeitige Trades halten und bis zu 5 Trades pro Kerze öffnen. Für Multi-Symbol-Trading, attachieren Sie den EA auf mehrere Charts (ein Chart pro Symbol).
 
@@ -109,7 +115,7 @@ Dies führt zu sehr engen Stops, ideal für schnelle Scalping-Trades innerhalb d
 
 ## Empfohlene Einstellungen
 
-### Für Tight Stops mit Multitrading (Standard)
+### Für Tight Stops mit Multitrading und Break-Even (Standard)
 ```
 UseTightStops = true
 TightSLPercent = 30.0
@@ -118,9 +124,13 @@ RiskPercent = 1.0
 MinWickPips = 5
 MaxOpenTrades = 5
 MaxTradesPerCandle = 5
+UseBreakEven = true
+BreakEvenTriggerPips = 10.0
+BreakEvenOffsetPips = 1.0
+UseTrailingStop = true
 ```
 
-### Für Anfänger (Konservativ)
+### Für Anfänger (Konservativ mit Break-Even)
 ```
 UseTightStops = false
 RiskPercent = 0.5
@@ -129,9 +139,12 @@ TakeProfitMultiplier = 2.0
 MaxOpenTrades = 2
 MaxTradesPerCandle = 2
 TradeOnlyTrend = true
+UseBreakEven = true
+BreakEvenTriggerPips = 15.0
+BreakEvenOffsetPips = 2.0
 ```
 
-### Für Fortgeschrittene (Moderat)
+### Für Fortgeschrittene (Moderat mit aggressivem Break-Even)
 ```
 UseTightStops = false
 RiskPercent = 1.0
@@ -140,10 +153,13 @@ TakeProfitMultiplier = 1.5
 MaxOpenTrades = 3
 MaxTradesPerCandle = 3
 TradeOnlyTrend = false
+UseBreakEven = true
+BreakEvenTriggerPips = 8.0
+BreakEvenOffsetPips = 0.5
 UseTrailingStop = true
 ```
 
-### Für Erfahrene (Aggressiv mit Tight Stops und Multitrading)
+### Für Erfahrene (Aggressiv mit Tight Stops, Multitrading und schnellem Break-Even)
 ```
 UseTightStops = true
 TightSLPercent = 25.0
@@ -153,6 +169,9 @@ MinWickPips = 3
 MaxOpenTrades = 5
 MaxTradesPerCandle = 5
 WickToBodyRatio = 1.5
+UseBreakEven = true
+BreakEvenTriggerPips = 5.0
+BreakEvenOffsetPips = 0.5
 ```
 
 ### Multi-Symbol Trading Setup
@@ -205,8 +224,27 @@ Ein Short-Trade wird eröffnet, wenn:
 - **SL**: Über dem Docht-Hoch + Buffer
 - **TP**: 1.5x der Dochtlänge
 
+### Break-Even Funktion
+Die Break-Even (BE) Funktion schützt Trades automatisch vor Verlusten:
+
+**Funktionsweise**:
+1. **Trigger**: Wenn Trade +10 Pips im Gewinn ist (BreakEvenTriggerPips)
+2. **Aktion**: SL wird automatisch auf Entry +1 Pip (Long) bzw. Entry -1 Pip (Short) gesetzt
+3. **Vorteil**: Trade kann nicht mehr verlieren, mindestens 1 Pip Gewinn ist gesichert
+4. **Priorität**: BE wird VOR dem Trailing Stop aktiviert
+
+**Beispiel**:
+- Long Entry bei 1.1000, SL bei 1.0965 (35 Pips), TP bei 1.1035
+- Bei 1.1010 (10 Pips Gewinn) → SL wird auf 1.1001 gesetzt
+- Trade ist jetzt risikofrei, mindestens 1 Pip Gewinn garantiert
+- Danach aktiviert sich Trailing Stop bei 50% des TP
+
+**Parameter anpassen**:
+- `BreakEvenTriggerPips = 10.0` - Wie viele Pips Gewinn für BE
+- `BreakEvenOffsetPips = 1.0` - Wie viele Pips über/unter Entry
+
 ### Trailing Stop
-- Aktiviert sich bei 50% des Take Profit
+- Aktiviert sich bei 50% des Take Profit (NACH Break-Even)
 - Bewegt den SL kontinuierlich mit dem Gewinn
 - Schützt bereits erzielte Gewinne
 
