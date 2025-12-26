@@ -63,6 +63,8 @@ PositionInfo positionData[];
 
 //--- Function declarations
 bool IsCryptoSymbol(string symbol);
+void CheckAndSetSLTP(ulong ticket, string symbol);
+void CheckAndTrailStop(ulong ticket, string symbol);
 
 //+------------------------------------------------------------------+
 //| Expert initialization function                                     |
