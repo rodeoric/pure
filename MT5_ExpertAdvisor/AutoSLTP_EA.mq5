@@ -25,9 +25,17 @@ input group "=== Stop Loss & Take Profit Settings (BTCUSD Only) ==="
 input double   BTCStopLossPips = 5000.0;     // Stop Loss in pips (BTCUSD) - 50000 points
 input double   BTCTakeProfitPips = 10000.0;  // Take Profit in pips (BTCUSD) - 100000 points
 
-input group "=== Break-Even Settings ==="
-input double   BreakEvenTriggerPips = 10.0;  // Move to BE when profit reaches this (pips)
-input double   BreakEvenOffsetPips = 1.0;    // Offset from entry when moving to BE (pips)
+input group "=== Break-Even Settings (Forex & Metals) ==="
+input double   BreakEvenTriggerPips = 10.0;  // Move to BE when profit reaches this (pips) - Forex & Metals
+input double   BreakEvenOffsetPips = 1.0;    // Offset from entry when moving to BE (pips) - Forex & Metals
+
+input group "=== Break-Even Settings (Cryptocurrencies) ==="
+input double   CryptoBreakEvenTriggerPips = 50.0;  // Move to BE when profit reaches this (pips) - Crypto
+input double   CryptoBreakEvenOffsetPips = 10.0;   // Offset from entry when moving to BE (pips) - Crypto
+
+input group "=== Break-Even Settings (BTCUSD Only) ==="
+input double   BTCBreakEvenTriggerPips = 500.0;   // Move to BE when profit reaches this (pips) - BTCUSD (5000 points)
+input double   BTCBreakEvenOffsetPips = 100.0;    // Offset from entry when moving to BE (pips) - BTCUSD (1000 points)
 
 input group "=== Trailing Settings ==="
 input double   TrailStepPips = 5.0;          // Trailing step in pips
@@ -96,7 +104,9 @@ int OnInit()
    Print("Forex & Metals Settings - SL: ", StopLossPips, " pips (", StopLossPips * 10, " points), TP: ", TakeProfitPips, " pips (", TakeProfitPips * 10, " points)");
    Print("Cryptocurrency Settings - SL: ", CryptoStopLossPips, " pips (", CryptoStopLossPips * 10, " points), TP: ", CryptoTakeProfitPips, " pips (", CryptoTakeProfitPips * 10, " points)");
    Print("BTCUSD Specific Settings - SL: ", BTCStopLossPips, " pips (", BTCStopLossPips * 10, " points), TP: ", BTCTakeProfitPips, " pips (", BTCTakeProfitPips * 10, " points)");
-   Print("Break-Even: Trigger at +", BreakEvenTriggerPips, " pips, Move SL to Entry +", BreakEvenOffsetPips, " pips");
+   Print("Break-Even Forex & Metals: Trigger at +", BreakEvenTriggerPips, " pips, Move SL to Entry +", BreakEvenOffsetPips, " pips");
+   Print("Break-Even Cryptocurrencies: Trigger at +", CryptoBreakEvenTriggerPips, " pips, Move SL to Entry +", CryptoBreakEvenOffsetPips, " pips");
+   Print("Break-Even BTCUSD: Trigger at +", BTCBreakEvenTriggerPips, " pips, Move SL to Entry +", BTCBreakEvenOffsetPips, " pips");
    Print("Trailing: ", TrailStepPips, " pips on ", EnumToString(TrailTimeframe));
    Print("Timer check interval: ", timerInterval, " seconds");
    Print("Symbol matching: Exact match + prefix matching for broker suffixes");
@@ -433,15 +443,36 @@ void CheckAndTrailStop(ulong ticket, string symbol)
    else if(posType == POSITION_TYPE_SELL)
       profitPips = (openPrice - currentPrice) / pipValue;
    
+   //--- Determine which break-even parameters to use based on symbol
+   double beTriggerPips, beOffsetPips;
+   if(StringFind(symbol, "BTC") >= 0)
+   {
+      // BTCUSD-specific break-even settings
+      beTriggerPips = BTCBreakEvenTriggerPips;
+      beOffsetPips = BTCBreakEvenOffsetPips;
+   }
+   else if(IsCryptoSymbol(symbol))
+   {
+      // General cryptocurrency break-even settings
+      beTriggerPips = CryptoBreakEvenTriggerPips;
+      beOffsetPips = CryptoBreakEvenOffsetPips;
+   }
+   else
+   {
+      // Forex & Metals break-even settings
+      beTriggerPips = BreakEvenTriggerPips;
+      beOffsetPips = BreakEvenOffsetPips;
+   }
+   
    //--- FIRST PRIORITY: Check if we should move to break-even
-   if(!positionData[posIndex].breakEvenSet && profitPips >= BreakEvenTriggerPips)
+   if(!positionData[posIndex].breakEvenSet && profitPips >= beTriggerPips)
    {
       //--- Calculate break-even SL (entry + offset)
       double breakEvenSL;
       if(posType == POSITION_TYPE_BUY)
-         breakEvenSL = NormalizeDouble(openPrice + (BreakEvenOffsetPips * pipValue), digits);
+         breakEvenSL = NormalizeDouble(openPrice + (beOffsetPips * pipValue), digits);
       else
-         breakEvenSL = NormalizeDouble(openPrice - (BreakEvenOffsetPips * pipValue), digits);
+         breakEvenSL = NormalizeDouble(openPrice - (beOffsetPips * pipValue), digits);
       
       //--- Only move to BE if it's better than current SL
       bool shouldMoveToBE = false;
@@ -454,7 +485,7 @@ void CheckAndTrailStop(ulong ticket, string symbol)
       {
          if(trade.PositionModify(ticket, breakEvenSL, currentTP))
          {
-            Print("BREAK-EVEN activated for position #", ticket, " on ", symbol, ". New SL: ", breakEvenSL, " (Entry +", BreakEvenOffsetPips, " pips)");
+            Print("BREAK-EVEN activated for position #", ticket, " on ", symbol, ". New SL: ", breakEvenSL, " (Entry +", beOffsetPips, " pips)");
             positionData[posIndex].initialSL = breakEvenSL;
             positionData[posIndex].breakEvenSet = true;
          }
