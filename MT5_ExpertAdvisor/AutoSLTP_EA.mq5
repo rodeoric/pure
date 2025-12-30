@@ -7,8 +7,8 @@
 #property link      ""
 #property version   "1.00"
 #property description "Automatically manages Stop Loss and Take Profit"
-#property description "Sets SL 10 pips below entry and TP 20 pips above entry"
-#property description "Trails SL by 5 pips based on 5-minute candle analysis"
+#property description "Sets configurable SL/TP per instrument type"
+#property description "Includes Break-Even protection (Trailing DISABLED)"
 
 #include <Trade\Trade.mqh>
 
@@ -497,6 +497,12 @@ void CheckAndTrailStop(ulong ticket, string symbol)
       return; // Don't trail on the same tick as break-even
    }
    
+   //--- TRAILING DISABLED: User requested removal of trailing functionality
+   //--- Only Break-Even feature remains active
+   //--- (Trailing code removed to prevent premature stop-outs)
+   
+   /*
+   //--- ORIGINAL TRAILING CODE (DISABLED)
    //--- SECOND PRIORITY: Trail only after break-even is set
    if(positionData[posIndex].breakEvenSet)
    {
@@ -537,6 +543,7 @@ void CheckAndTrailStop(ulong ticket, string symbol)
          }
       }
    }
+   */
 }
 
 //+------------------------------------------------------------------+
