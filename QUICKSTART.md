@@ -67,8 +67,8 @@ Time   Action                           Price      Status
 00:01  EA detects position             1.1000     
 00:01  EA sets SL                      1.0900     SL = Entry - 100 pips
 00:01  EA sets TP                      1.1200     TP = Entry + 200 pips
-00:30  Price moves up                  1.1030     Profit = 30 pips (300 points)
-00:30  EA AUTO-CLOSES                  1.1030     ✓ Position closed with 30 pips profit
+00:30  Price moves up                  1.1031     Profit = 31 pips (310 points)
+00:30  EA AUTO-CLOSES                  1.1031     ✓ Position closed with 31 pips profit (target was 30+)
 ```
 
 ## Configuration Examples

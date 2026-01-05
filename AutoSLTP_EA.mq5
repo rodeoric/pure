@@ -162,8 +162,10 @@ void CheckAndManagePositions()
       if(!IsMonitoredSymbol(symbol))
          continue;
       
-      //--- Skip if not our magic number (unless it's 0, meaning position has no magic)
-      if(magic != 0 && magic != MagicNumber)
+      //--- Skip if not our magic number
+      //--- If MagicNumber = 0, EA manages all positions
+      //--- If position magic = 0 OR matches EA magic, manage it
+      if(MagicNumber != 0 && magic != 0 && magic != MagicNumber)
          continue;
       
       //--- Check if position needs SL/TP
@@ -278,9 +280,8 @@ void CheckAutoClose(ulong ticket, string symbol)
    if(posIndex < 0)
       return;
    
-   //--- Don't auto-close if manually modified
-   if(positionData[posIndex].manuallyModified)
-      return;
+   //--- Note: Auto-close works regardless of manual modifications
+   //--- This ensures profit target is always respected
    
    double currentPrice = PositionGetDouble(POSITION_PRICE_CURRENT);
    double openPrice = PositionGetDouble(POSITION_PRICE_OPEN);
