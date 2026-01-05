@@ -294,9 +294,15 @@ void CheckAutoClose(ulong ticket, string symbol)
       profitPoints = (currentPrice - openPrice) / point;
    else if(posType == POSITION_TYPE_SELL)
       profitPoints = (openPrice - currentPrice) / point;
+   else
+   {
+      //--- Unknown position type, skip
+      Print("WARNING: Unknown position type for ticket #", ticket);
+      return;
+   }
    
-   //--- Check if profit target reached
-   if(profitPoints >= AutoClosePoints)
+   //--- Check if profit target reached (only close if in profit)
+   if(profitPoints >= AutoClosePoints && profitPoints > 0)
    {
       //--- Close the position
       if(trade.PositionClose(ticket))
