@@ -252,6 +252,10 @@ void CalculateSLTP(string symbol, double openPrice, long posType, double &sl, do
    double point = SymbolInfoDouble(symbol, SYMBOL_POINT);
    int digits = (int)SymbolInfoInteger(symbol, SYMBOL_DIGITS);
    
+   //--- Initialize to zero (safe default)
+   sl = 0;
+   tp = 0;
+   
    //--- Calculate distances in points
    double slDistance = StopLossPoints * point;
    double tpDistance = TakeProfitPoints * point;
@@ -265,6 +269,11 @@ void CalculateSLTP(string symbol, double openPrice, long posType, double &sl, do
    {
       sl = NormalizeDouble(openPrice + slDistance, digits);
       tp = NormalizeDouble(openPrice - tpDistance, digits);
+   }
+   else
+   {
+      //--- Unknown position type
+      Print("ERROR: Unknown position type ", posType, " for symbol ", symbol);
    }
 }
 
