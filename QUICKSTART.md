@@ -4,10 +4,11 @@
 
 The AutoSLTP EA is a "set and forget" position manager that:
 
-1. **Automatically sets Stop Loss and Take Profit** on positions that don't have them
-2. **Automatically closes positions** when they reach a profit target
-3. **Works on multiple symbols** simultaneously
-4. **Respects manual changes** - stops managing if you manually modify SL/TP
+1. **Automatically sets Stop Loss and Take Profit** on **Forex and Metal** positions that don't have them
+2. **Automatically closes Forex and Metal positions** when they reach a profit target
+3. **EXCLUDES Cryptocurrency positions** - no SL/TP setting, no auto-close for crypto
+4. **Works on multiple symbols** simultaneously
+5. **Respects manual changes** - stops managing if you manually modify SL/TP
 
 ## Visual Workflow
 
@@ -19,15 +20,20 @@ The AutoSLTP EA is a "set and forget" position manager that:
                        │
                        ▼
 ┌─────────────────────────────────────────────────────────────┐
-│              Does it have SL/TP already?                     │
+│              Is this a Cryptocurrency?                       │
 └──────────────┬───────────────────────┬──────────────────────┘
-               │ NO                    │ YES
+               │ YES (BTC, ETH, etc)   │ NO (Forex/Metals)
                ▼                       ▼
 ┌────────────────────────┐   ┌───────────────────────────────┐
-│   EA Sets SL/TP        │   │  EA Tracks Position           │
-│   SL: Entry ± 1000pts  │   │  (No changes needed)          │
-│   TP: Entry ± 2000pts  │   │                               │
-└──────────┬─────────────┘   └──────────┬────────────────────┘
+│   SKIP - No Management │   │  Does it have SL/TP already?  │
+│   Crypto left alone    │   └──────┬────────────────┬───────┘
+└────────────────────────┘          │ NO             │ YES
+                                    ▼                ▼
+                         ┌────────────────────┐   ┌──────────────┐
+                         │   EA Sets SL/TP    │   │  EA Tracks   │
+                         │   SL: Entry ±1000  │   │  Position    │
+                         │   TP: Entry ±2000  │   │              │
+                         └──────────┬─────────┘   └──────┬───────┘
            │                             │
            └──────────────┬──────────────┘
                           ▼
@@ -119,8 +125,9 @@ For most forex pairs (5-digit quotes):
 
 ## Key Features
 
-✅ **Automatic SL/TP** - Sets automatically if missing
-✅ **Auto-Close at Profit** - Secures profits early
+✅ **Automatic SL/TP** - Sets automatically if missing (Forex & Metals only)
+✅ **Auto-Close at Profit** - Secures profits early (Forex & Metals only)
+✅ **Crypto Exclusion** - Cryptocurrency positions are NOT managed
 ✅ **Multi-Symbol** - Monitors 50+ pairs simultaneously  
 ✅ **Manual Override** - Respects your changes
 ✅ **Broker Suffix Support** - Works with EURUSD, EURUSD.a, EURUSD.pro, etc.
@@ -130,14 +137,16 @@ For most forex pairs (5-digit quotes):
 ❌ **No Trailing Stop** - SL stays fixed
 ❌ **No Break-Even** - SL doesn't move to entry
 ❌ **No Partial Close** - Closes entire position
+❌ **No Crypto Management** - Crypto positions left completely alone
 
 ## Important Safety Notes
 
 ⚠️ **Always test on demo account first**
+⚠️ **Cryptocurrency positions are EXCLUDED** - No SL/TP, no auto-close for crypto
+⚠️ **Only Forex and Metals are managed** - Gold, Silver, currency pairs
 ⚠️ **Check broker's minimum stop distance** - Some brokers require larger distances
 ⚠️ **Verify symbol names** - Ensure symbols match your broker's naming
 ⚠️ **Monitor first trades** - Check Expert Journal logs
-⚠️ **Adjust for instrument** - Gold, crypto may need different values
 
 ## Quick Start Checklist
 

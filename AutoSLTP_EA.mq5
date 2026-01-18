@@ -7,8 +7,9 @@
 #property link      ""
 #property version   "1.00"
 #property description "Automatically manages Stop Loss and Take Profit"
-#property description "Sets configurable SL/TP for all positions"
-#property description "Auto-closes positions at profit target"
+#property description "Sets configurable SL/TP for Forex and Metals only"
+#property description "Cryptocurrency positions are excluded from management"
+#property description "Auto-closes positions at profit target (Forex/Metals only)"
 
 #include <Trade\Trade.mqh>
 
@@ -69,6 +70,8 @@ int OnInit()
    Print("Monitoring ", symbolCount, " symbols: ", TradingSymbols);
    Print("Settings - SL: ", StopLossPoints, " points, TP: ", TakeProfitPoints, " points");
    Print("Auto-close at: ", AutoClosePoints, " points profit");
+   Print("IMPORTANT: Cryptocurrency positions are EXCLUDED from SL/TP and auto-close management");
+   Print("SL/TP management applies ONLY to Forex pairs and Metals (Gold, Silver, etc.)");
    Print("Timer check interval: ", timerInterval, " seconds");
    Print("Symbol matching: Exact match + prefix matching for broker suffixes");
    
@@ -140,6 +143,26 @@ bool IsMonitoredSymbol(string symbol)
 }
 
 //+------------------------------------------------------------------+
+//| Check if symbol is a cryptocurrency                               |
+//+------------------------------------------------------------------+
+bool IsCryptoSymbol(string symbol)
+{
+   //--- List of crypto identifiers (symbol usually contains these)
+   string cryptoIdentifiers[] = {"BTC", "ETH", "BNB", "XRP", "ADA", "SOL", "DOGE", "TRX", 
+                                  "MATIC", "DOT", "LTC", "AVAX", "LINK", "UNI", "ATOM", 
+                                  "XLM", "TON", "BCH", "APT", "FIL", "NEAR"};
+   
+   //--- Check if symbol contains any crypto identifier
+   for(int i = 0; i < ArraySize(cryptoIdentifiers); i++)
+   {
+      if(StringFind(symbol, cryptoIdentifiers[i]) >= 0)
+         return true;
+   }
+   
+   return false;
+}
+
+//+------------------------------------------------------------------+
 //| Check and manage all positions                                    |
 //+------------------------------------------------------------------+
 void CheckAndManagePositions()
@@ -183,6 +206,13 @@ void CheckAndSetSLTP(ulong ticket, string symbol)
 {
    if(!PositionSelectByTicket(ticket))
       return;
+   
+   //--- Skip cryptocurrency symbols - no SL/TP management for crypto
+   if(IsCryptoSymbol(symbol))
+   {
+      Print("SKIPPED: Cryptocurrency position #", ticket, " on ", symbol, " - No SL/TP management for crypto");
+      return;
+   }
    
    double currentSL = PositionGetDouble(POSITION_SL);
    double currentTP = PositionGetDouble(POSITION_TP);
@@ -283,6 +313,10 @@ void CalculateSLTP(string symbol, double openPrice, long posType, double &sl, do
 void CheckAutoClose(ulong ticket, string symbol)
 {
    if(!PositionSelectByTicket(ticket))
+      return;
+   
+   //--- Skip cryptocurrency symbols - no auto-close for crypto
+   if(IsCryptoSymbol(symbol))
       return;
    
    int posIndex = FindPositionIndex(ticket);

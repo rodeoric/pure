@@ -4,10 +4,13 @@
 
 AutoSLTP EA is a MetaTrader 5 Expert Advisor that automatically manages Stop Loss (SL) and Take Profit (TP) levels for open positions. It also includes an auto-close feature to secure profits at a configurable target.
 
+**IMPORTANT:** This EA only manages **Forex pairs and Metals** (Gold, Silver). **Cryptocurrency positions are completely excluded** from all management (no SL/TP setting, no auto-close).
+
 ## Features
 
-- **Automatic SL/TP Setting**: Automatically sets Stop Loss and Take Profit for positions that don't have them
-- **Auto-Close at Profit Target**: Automatically closes positions when they reach a specified profit level
+- **Automatic SL/TP Setting**: Automatically sets Stop Loss and Take Profit for Forex and Metal positions that don't have them
+- **Auto-Close at Profit Target**: Automatically closes Forex and Metal positions when they reach a specified profit level
+- **Crypto Exclusion**: Cryptocurrency positions are monitored but NOT managed - no SL/TP, no auto-close
 - **Multi-Symbol Support**: Monitors multiple trading pairs simultaneously
 - **Manual Override Protection**: Stops managing positions if SL/TP is manually modified
 - **Broker Suffix Support**: Works with broker-specific symbol suffixes (e.g., EURUSD.a, XAUUSD.pro)
@@ -15,17 +18,17 @@ AutoSLTP EA is a MetaTrader 5 Expert Advisor that automatically manages Stop Los
 ## Configuration Parameters
 
 ### Stop Loss & Take Profit Settings
-- **StopLossPoints**: Stop Loss distance in points (Default: 1000 points = 100 pips)
-- **TakeProfitPoints**: Take Profit distance in points (Default: 2000 points = 200 pips)
+- **StopLossPoints**: Stop Loss distance in points (Default: 1000 points = 100 pips) - **Applies to Forex & Metals only**
+- **TakeProfitPoints**: Take Profit distance in points (Default: 2000 points = 200 pips) - **Applies to Forex & Metals only**
 
 ### Auto-Close Profit Target
-- **AutoClosePoints**: Automatically close position when profit reaches this value in points (Default: 300 points)
+- **AutoClosePoints**: Automatically close position when profit reaches this value in points (Default: 300 points) - **Applies to Forex & Metals only**
 
 ### Trading Pairs
 - **TradingSymbols**: Comma-separated list of symbols to monitor (Default includes Forex, Metals, and Crypto pairs)
-  - Forex: AUDCAD, AUDCHF, AUDJPY, AUDNZD, AUDUSD, CADCHF, CADJPY, CHFJPY, EURAUD, EURCAD, EURCHF, EURGBP, EURJPY, EURUSD, GBPAUD, GBPCAD, GBPCHF, GBPJPY, GBPNZD, GBPUSD, NZDCAD, NZDCHF, NZDJPY, NZDUSD, USDCAD, USDCHF, USDJPY, EURHUF
-  - Metals: XAUUSD, XAGUSD
-  - Crypto: BTCUSD, ETHUSD, BNBUSD, XRPUSD, ADAUSD, SOLUSD, DOGEUSD, TRXUSD, MATICUSD, DOTUSD, LTCUSD, AVAXUSD, LINKUSD, UNIUSD, ATOMUSD, XLMUSD, TONUSD, BCHUSD, APTUSD, FILUSD, NEARUSD
+  - **Forex** (SL/TP & Auto-close ACTIVE): AUDCAD, AUDCHF, AUDJPY, AUDNZD, AUDUSD, CADCHF, CADJPY, CHFJPY, EURAUD, EURCAD, EURCHF, EURGBP, EURJPY, EURUSD, GBPAUD, GBPCAD, GBPCHF, GBPJPY, GBPNZD, GBPUSD, NZDCAD, NZDCHF, NZDJPY, NZDUSD, USDCAD, USDCHF, USDJPY, EURHUF
+  - **Metals** (SL/TP & Auto-close ACTIVE): XAUUSD, XAGUSD
+  - **Crypto** (NO MANAGEMENT - monitored only): BTCUSD, ETHUSD, BNBUSD, XRPUSD, ADAUSD, SOLUSD, DOGEUSD, TRXUSD, MATICUSD, DOTUSD, LTCUSD, AVAXUSD, LINKUSD, UNIUSD, ATOMUSD, XLMUSD, TONUSD, BCHUSD, APTUSD, FILUSD, NEARUSD
 
 ### General Settings
 - **MagicNumber**: Magic number for position identification (Default: 123456)
@@ -34,10 +37,11 @@ AutoSLTP EA is a MetaTrader 5 Expert Advisor that automatically manages Stop Los
 ## How It Works
 
 1. **Position Monitoring**: The EA monitors all open positions on the specified symbols
-2. **SL/TP Assignment**: If a position doesn't have SL/TP, the EA automatically sets them based on the configured distances
-3. **Profit Monitoring**: Continuously monitors position profit in points
-4. **Auto-Close**: When profit reaches the AutoClosePoints threshold, the position is automatically closed
-5. **Manual Override**: If you manually modify SL/TP, the EA stops managing that position
+2. **Crypto Detection**: Automatically detects cryptocurrency positions (BTC, ETH, XRP, etc.)
+3. **SL/TP Assignment**: If a **Forex or Metal** position doesn't have SL/TP, the EA automatically sets them based on the configured distances. **Crypto positions are skipped**.
+4. **Profit Monitoring**: Continuously monitors **Forex and Metal** position profit in points
+5. **Auto-Close**: When **Forex or Metal** position profit reaches the AutoClosePoints threshold, the position is automatically closed. **Crypto positions are never auto-closed**.
+6. **Manual Override**: If you manually modify SL/TP on Forex/Metal positions, the EA stops managing that position's SL/TP (but still monitors for auto-close)
 
 ## Installation
 
