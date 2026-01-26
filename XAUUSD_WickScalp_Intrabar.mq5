@@ -48,9 +48,6 @@ double   g_open     = 0.0;
 double   g_high     = 0.0;
 double   g_low      = 0.0;
 
-double   g_high_at  = 0.0;
-double   g_low_at   = 0.0;
-
 datetime g_last_trade_time = 0;
 
 //+------------------------------------------------------------------+
@@ -192,6 +189,11 @@ int SpreadPoints()
    if(!SymbolInfoDouble(InpSymbol, SYMBOL_ASK, ask)) return INVALID_SPREAD;
    if(!SymbolInfoDouble(InpSymbol, SYMBOL_BID, bid)) return INVALID_SPREAD;
    double pt = SymbolInfoDouble(InpSymbol, SYMBOL_POINT);
+   if(pt <= 0)
+   {
+      Print("ERROR: Invalid SYMBOL_POINT: ", pt);
+      return INVALID_SPREAD;
+   }
    return (int)MathRound((ask-bid)/pt);
 }
 
@@ -246,8 +248,6 @@ void UpdateBarState()
       g_open     = iOpen(InpSymbol, InpTF, 0);
       g_high     = g_open;
       g_low      = g_open;
-      g_high_at  = g_open;
-      g_low_at   = g_open;
    }
 }
 
@@ -259,13 +259,18 @@ bool TrySellSignal(double &sl, double &tp)
    if(!SymbolInfoDouble(InpSymbol, SYMBOL_ASK, ask)) return false;
 
    // update intrabar extremes with current prices
-   if(ask > g_high) { g_high = ask; g_high_at = ask; }
-   if(bid < g_low)  { g_low  = bid; g_low_at  = bid; }
+   if(ask > g_high) g_high = ask;
+   if(bid < g_low)  g_low  = bid;
 
    // current "body" size so far: distance from open to current close proxy (bid)
    double body = MathAbs(bid - g_open);
    double upper_wick = g_high - MathMax(g_open, bid);
    double pt = SymbolInfoDouble(InpSymbol, SYMBOL_POINT);
+   if(pt <= 0)
+   {
+      Print("ERROR: Invalid SYMBOL_POINT in TrySellSignal: ", pt);
+      return false;
+   }
 
    int upper_wick_pts = (int)MathRound(upper_wick / pt);
 
@@ -314,12 +319,17 @@ bool TryBuySignal(double &sl, double &tp)
    if(!SymbolInfoDouble(InpSymbol, SYMBOL_ASK, ask)) return false;
 
    // update intrabar extremes
-   if(ask > g_high) { g_high = ask; g_high_at = ask; }
-   if(bid < g_low)  { g_low  = bid; g_low_at  = bid; }
+   if(ask > g_high) g_high = ask;
+   if(bid < g_low)  g_low  = bid;
 
    double body = MathAbs(ask - g_open);
    double lower_wick = MathMin(g_open, ask) - g_low;
    double pt = SymbolInfoDouble(InpSymbol, SYMBOL_POINT);
+   if(pt <= 0)
+   {
+      Print("ERROR: Invalid SYMBOL_POINT in TryBuySignal: ", pt);
+      return false;
+   }
 
    int lower_wick_pts = (int)MathRound(lower_wick / pt);
 
