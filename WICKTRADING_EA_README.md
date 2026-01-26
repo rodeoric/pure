@@ -11,10 +11,29 @@ This Expert Advisor (EA) is designed for quick scalping trades on XAUUSD (Gold) 
 - **Commission Aware**: Factors in 7 EUR/USD commission per lot
 
 ## Installation
+
+### IMPORTANT: How to Download the File Correctly
+**DO NOT copy/paste from GitHub's web interface!** This will include markdown formatting and cause compilation errors.
+
+**Correct method:**
+1. On GitHub, click on `XAUUSD_WickScalp_Intrabar.mq5`
+2. Click the "Raw" button (top right of file view)
+3. Right-click and "Save As..." or use Ctrl+S
+4. Save with the `.mq5` extension
+
+**OR** use git clone:
+```bash
+git clone https://github.com/rodeoric/pure.git
+```
+
+### Installation Steps
 1. Copy `XAUUSD_WickScalp_Intrabar.mq5` to your MetaTrader 5 `Experts` folder
-2. Compile in MetaEditor (F7)
-3. Attach to XAUUSD M1 or M5 chart
-4. Configure settings in EA inputs
+   - Location: `C:\Users\YourName\AppData\Roaming\MetaQuotes\Terminal\[TerminalID]\MQL5\Experts\`
+2. Open MetaEditor (press F4 in MT5)
+3. Open the file in MetaEditor
+4. Compile the EA (press F7)
+5. If compilation is successful, attach to XAUUSD M1 or M5 chart
+6. Configure settings in EA inputs dialog
 
 ## Key Settings
 
