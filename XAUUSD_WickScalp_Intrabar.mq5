@@ -88,10 +88,6 @@ void OnDeinit(const int reason)
 //+------------------------------------------------------------------+
 void OnTick()
 {
-   // Only trade on M1 or M5
-   if(InpTF != PERIOD_M1 && InpTF != PERIOD_M5)
-      return;
-      
    // Check spread
    if(SpreadPoints() > InpMaxSpreadPoints)
       return;
@@ -217,6 +213,26 @@ double NormalizePrice(double price)
    return NormalizeDouble(price, digits);
 }
 
+bool IsProfitWorthCommission(double profit_price)
+{
+   // Calculate if profit is worth the commission cost
+   double commission_cost = InpCommissionPerLot * InpLots;
+   double tick_value = SymbolInfoDouble(InpSymbol, SYMBOL_TRADE_TICK_VALUE);
+   double tick_size = SymbolInfoDouble(InpSymbol, SYMBOL_TRADE_TICK_SIZE);
+   
+   // Validate tick_value to prevent division by zero
+   if(tick_value <= 0)
+   {
+      Print("ERROR: Invalid tick_value: ", tick_value);
+      return false;
+   }
+   
+   // Convert commission to price units
+   double min_profit_price = (commission_cost / tick_value) * tick_size;
+   
+   return (profit_price >= min_profit_price * InpMinProfitMultiplier);
+}
+
 //+------------------------------------------------------------------+
 // Entry logic (intrabar wick rejection)
 //+------------------------------------------------------------------+
@@ -284,14 +300,7 @@ bool TrySellSignal(double &sl, double &tp)
 
    // Factor in commission: check if TP is worth it
    double tp_profit = bid - tp; // profit in price
-   double commission_cost = InpCommissionPerLot * InpLots;
-   double tick_value = SymbolInfoDouble(InpSymbol, SYMBOL_TRADE_TICK_VALUE);
-   double tick_size = SymbolInfoDouble(InpSymbol, SYMBOL_TRADE_TICK_SIZE);
-   
-   // Convert commission to price units
-   double min_profit_price = (commission_cost / tick_value) * tick_size;
-   
-   if(tp_profit < min_profit_price * InpMinProfitMultiplier)
+   if(!IsProfitWorthCommission(tp_profit))
       return false;
 
    return true;
@@ -345,14 +354,7 @@ bool TryBuySignal(double &sl, double &tp)
 
    // Factor in commission: check if TP is worth it
    double tp_profit = tp - ask; // profit in price
-   double commission_cost = InpCommissionPerLot * InpLots;
-   double tick_value = SymbolInfoDouble(InpSymbol, SYMBOL_TRADE_TICK_VALUE);
-   double tick_size = SymbolInfoDouble(InpSymbol, SYMBOL_TRADE_TICK_SIZE);
-   
-   // Convert commission to price units
-   double min_profit_price = (commission_cost / tick_value) * tick_size;
-   
-   if(tp_profit < min_profit_price * InpMinProfitMultiplier)
+   if(!IsProfitWorthCommission(tp_profit))
       return false;
 
    return true;
