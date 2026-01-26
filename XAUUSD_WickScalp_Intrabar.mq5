@@ -206,6 +206,11 @@ bool CooldownOk()
 double PointsToPrice(int pts)
 {
    double pt = SymbolInfoDouble(InpSymbol, SYMBOL_POINT);
+   if(pt <= 0)
+   {
+      Print("ERROR: Invalid SYMBOL_POINT in PointsToPrice: ", pt);
+      return 0.0;
+   }
    return pts * pt;
 }
 
@@ -229,6 +234,13 @@ bool IsProfitWorthCommission(double profit_price)
       return false;
    }
    
+   // Validate tick_size
+   if(tick_size <= 0)
+   {
+      Print("ERROR: Invalid tick_size: ", tick_size);
+      return false;
+   }
+   
    // Convert commission to price units
    double min_profit_price = (commission_cost / tick_value) * tick_size;
    
@@ -246,6 +258,14 @@ void UpdateBarState()
       // new bar
       g_bar_time = t;
       g_open     = iOpen(InpSymbol, InpTF, 0);
+      
+      // Validate price data
+      if(g_open <= 0)
+      {
+         Print("ERROR: Invalid open price: ", g_open);
+         return;
+      }
+      
       g_high     = g_open;
       g_low      = g_open;
    }
