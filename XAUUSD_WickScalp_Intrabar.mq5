@@ -3,7 +3,6 @@
 //| Intrabar wick-rejection scalper with auto SL/TP + timeout         |
 //| Optimized for quick scalping trades on M1/M5 timeframes          |
 //+------------------------------------------------------------------+
-#property strict
 #property copyright "Wicktrading EA"
 #property version   "1.00"
 
@@ -38,6 +37,10 @@ input bool   InpOneTradeAtATime     = true;           // only one position for t
 
 // Commission (EUR/USD per lot)
 input double InpCommissionPerLot    = 7.0;            // Commission per lot in EUR/USD
+input double InpMinProfitMultiplier = 1.5;            // Minimum profit must be this times commission
+
+// -------------------- Constants --------------------
+#define INVALID_SPREAD 999999
 
 // -------------------- State --------------------
 datetime g_bar_time = 0;
@@ -190,8 +193,8 @@ bool GetOurPositionInfo(ulong &ticket, datetime &open_time)
 int SpreadPoints()
 {
    double ask=0, bid=0;
-   if(!SymbolInfoDouble(InpSymbol, SYMBOL_ASK, ask)) return 999999;
-   if(!SymbolInfoDouble(InpSymbol, SYMBOL_BID, bid)) return 999999;
+   if(!SymbolInfoDouble(InpSymbol, SYMBOL_ASK, ask)) return INVALID_SPREAD;
+   if(!SymbolInfoDouble(InpSymbol, SYMBOL_BID, bid)) return INVALID_SPREAD;
    double pt = SymbolInfoDouble(InpSymbol, SYMBOL_POINT);
    return (int)MathRound((ask-bid)/pt);
 }
@@ -283,9 +286,12 @@ bool TrySellSignal(double &sl, double &tp)
    double tp_profit = bid - tp; // profit in price
    double commission_cost = InpCommissionPerLot * InpLots;
    double tick_value = SymbolInfoDouble(InpSymbol, SYMBOL_TRADE_TICK_VALUE);
-   double min_profit = commission_cost / tick_value * pt; // minimum profit needed
+   double tick_size = SymbolInfoDouble(InpSymbol, SYMBOL_TRADE_TICK_SIZE);
    
-   if(tp_profit < min_profit * 1.5) // require 1.5x commission to make it worthwhile
+   // Convert commission to price units
+   double min_profit_price = (commission_cost / tick_value) * tick_size;
+   
+   if(tp_profit < min_profit_price * InpMinProfitMultiplier)
       return false;
 
    return true;
@@ -341,9 +347,12 @@ bool TryBuySignal(double &sl, double &tp)
    double tp_profit = tp - ask; // profit in price
    double commission_cost = InpCommissionPerLot * InpLots;
    double tick_value = SymbolInfoDouble(InpSymbol, SYMBOL_TRADE_TICK_VALUE);
-   double min_profit = commission_cost / tick_value * pt; // minimum profit needed
+   double tick_size = SymbolInfoDouble(InpSymbol, SYMBOL_TRADE_TICK_SIZE);
    
-   if(tp_profit < min_profit * 1.5) // require 1.5x commission to make it worthwhile
+   // Convert commission to price units
+   double min_profit_price = (commission_cost / tick_value) * tick_size;
+   
+   if(tp_profit < min_profit_price * InpMinProfitMultiplier)
       return false;
 
    return true;
