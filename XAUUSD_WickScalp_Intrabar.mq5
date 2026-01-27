@@ -151,10 +151,9 @@ void OnTimer()
 //+------------------------------------------------------------------+
 bool IsOurPositionOpen()
 {
-   int i;
-   for(i=PositionsTotal()-1; i>=0; i--)
+   for(int pos_index=PositionsTotal()-1; pos_index>=0; pos_index--)
    {
-      if(PositionSelectByIndex(i))
+      if(PositionSelectByIndex(pos_index))
       {
          string sym = PositionGetString(POSITION_SYMBOL);
          long   mg  = (long)PositionGetInteger(POSITION_MAGIC);
@@ -167,10 +166,9 @@ bool IsOurPositionOpen()
 
 bool GetOurPositionInfo(ulong &ticket, datetime &open_time)
 {
-   int i;
-   for(i=PositionsTotal()-1; i>=0; i--)
+   for(int pos_index=PositionsTotal()-1; pos_index>=0; pos_index--)
    {
-      if(PositionSelectByIndex(i))
+      if(PositionSelectByIndex(pos_index))
       {
          string sym = PositionGetString(POSITION_SYMBOL);
          long   mg  = (long)PositionGetInteger(POSITION_MAGIC);
