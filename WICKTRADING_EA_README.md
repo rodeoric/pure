@@ -1,5 +1,13 @@
 # Wicktrading EA - XAUUSD Scalper
 
+## ⚠️ DOWNLOAD ANLEITUNG AUF DEUTSCH
+**Siehe [DOWNLOAD_ANLEITUNG.md](DOWNLOAD_ANLEITUNG.md) für detaillierte Schritt-für-Schritt Anweisungen auf Deutsch!**
+
+Wenn Sie Kompilierungsfehler wie `'#' - invalid preprocessor command` oder `unknown symbol '`'` bekommen, 
+**haben Sie die Datei FALSCH heruntergeladen!** Folgen Sie der [DOWNLOAD_ANLEITUNG.md](DOWNLOAD_ANLEITUNG.md)!
+
+---
+
 ## Overview
 This Expert Advisor (EA) is designed for quick scalping trades on XAUUSD (Gold) using wick rejection strategy.
 
