@@ -151,8 +151,7 @@ void OnTimer()
 //+------------------------------------------------------------------+
 bool IsOurPositionOpen()
 {
-   int i;
-   for(i=PositionsTotal()-1; i>=0; i--)
+   for(int i=PositionsTotal()-1; i>=0; i--)
    {
       if(PositionSelectByIndex(i))
       {
@@ -167,8 +166,7 @@ bool IsOurPositionOpen()
 
 bool GetOurPositionInfo(ulong &ticket, datetime &open_time)
 {
-   int i;
-   for(i=PositionsTotal()-1; i>=0; i--)
+   for(int i=PositionsTotal()-1; i>=0; i--)
    {
       if(PositionSelectByIndex(i))
       {
