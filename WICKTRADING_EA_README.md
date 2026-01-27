@@ -1,10 +1,19 @@
 # Wicktrading EA - XAUUSD Scalper
 
+## ⚠️ KOMPILIERUNGSFEHLER? 
+**Siehe [TROUBLESHOOTING.md](TROUBLESHOOTING.md) für Lösungen!**
+
 ## ⚠️ DOWNLOAD ANLEITUNG AUF DEUTSCH
 **Siehe [DOWNLOAD_ANLEITUNG.md](DOWNLOAD_ANLEITUNG.md) für detaillierte Schritt-für-Schritt Anweisungen auf Deutsch!**
 
-Wenn Sie Kompilierungsfehler wie `'#' - invalid preprocessor command` oder `unknown symbol '`'` bekommen, 
-**haben Sie die Datei FALSCH heruntergeladen!** Folgen Sie der [DOWNLOAD_ANLEITUNG.md](DOWNLOAD_ANLEITUNG.md)!
+## 🔴 WICHTIG: Häufigster Fehler
+**Dateiname:** Die Datei MUSS **XAUUSD_WickScalp_Intrabar.mq5** heißen!
+- ❌ NICHT umbenennen in "wicktrading_test_27.01.2026.mq5"
+- ❌ NICHT "XAUUSD_WickScalp_Intrabar_copy.mq5"
+- ✅ **XAUUSD_WickScalp_Intrabar.mq5** (Original-Name!)
+
+Wenn Sie Kompilierungsfehler wie `'#' - invalid preprocessor command` oder `unknown symbol '`'` oder `undeclared identifier` bekommen, 
+**haben Sie die Datei FALSCH heruntergeladen oder umbenannt!** Folgen Sie der [DOWNLOAD_ANLEITUNG.md](DOWNLOAD_ANLEITUNG.md) oder [TROUBLESHOOTING.md](TROUBLESHOOTING.md)!
 
 ---
 
